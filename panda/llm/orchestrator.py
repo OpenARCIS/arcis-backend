@@ -37,20 +37,43 @@ class LLMOrchestrator:
     ) -> None:
         """Initialize the LLM orchestrator with all components.
         
+        Components are interconnected: Planner and Reasoner use Engine and Memory,
+        Engine uses Memory for context, creating a cohesive system.
+        
         Args:
-            planner: Planner instance (defaults to Planner)
-            reasoner: Reasoner instance (defaults to Reasoner)
-            engine: LLM Engine instance (defaults to LLMEngine)
+            planner: Planner instance (defaults to Planner with engine/memory)
+            reasoner: Reasoner instance (defaults to Reasoner with engine/memory)
+            engine: LLM Engine instance (defaults to LLMEngine with memory)
             memory: Memory instance (defaults to ContextMemory)
             security: Security layer instance (defaults to SecurityLayer)
             comms: Communication manager instance (defaults to CommunicationManager)
         """
-        self.planner = planner or Planner()
-        self.reasoner = reasoner or Reasoner()
-        self.engine = engine or LLMEngine()
+        # Initialize memory first (used by other components)
         self.memory = memory or ContextMemory()
+        
+        # Initialize engine with memory reference
+        self.engine = engine or LLMEngine(memory=self.memory)
+        
+        # Initialize planner and reasoner with engine and memory references
+        # This creates strong connections between components
+        self.planner = planner or Planner(engine=self.engine, memory=self.memory)
+        self.reasoner = reasoner or Reasoner(engine=self.engine, memory=self.memory)
+        
+        # Initialize security and communication (less interconnected)
         self.security = security or SecurityLayer()
         self.comms = comms or CommunicationManager()
+        
+        # Ensure all components reference the same memory instance
+        if hasattr(self.planner, '_memory') and self.planner._memory is None:
+            self.planner._memory = self.memory
+        if hasattr(self.planner, '_engine') and self.planner._engine is None:
+            self.planner._engine = self.engine
+        if hasattr(self.reasoner, '_memory') and self.reasoner._memory is None:
+            self.reasoner._memory = self.memory
+        if hasattr(self.reasoner, '_engine') and self.reasoner._engine is None:
+            self.reasoner._engine = self.engine
+        if hasattr(self.engine, '_memory') and self.engine._memory is None:
+            self.engine._memory = self.memory
 
     def handle_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Top-level handler: normalize, decrypt, plan, reason, call LLM, store, format.
@@ -88,14 +111,60 @@ class LLMOrchestrator:
         context = self.memory.get_context(limit=10)
         
         # Step 4: Reason about actions and execute plan steps
-        # For now, execute first step as placeholder
+        # Execute plan steps sequentially, updating status as we go
+        llm_responses = []
         if plan.steps:
-            first_step = plan.steps[0]
-            action_prompt = self.reasoner.select_action(
-                first_step.description, 
-                context={"goal": plan.goal, "history": context, "step": first_step.model_dump()}
-            )
-            llm_response = self.engine.run(action_prompt)
+            for step in plan.steps:
+                # Check dependencies before executing
+                if step.depends_on:
+                    # Verify dependent steps are completed
+                    dependent_steps = [s for s in plan.steps if s.step_number in step.depends_on]
+                    incomplete = [s for s in dependent_steps if s.status != "completed"]
+                    if incomplete:
+                        step.status = "blocked"
+                        continue
+                
+                # Update step status
+                step.status = "in_progress"
+                
+                # Reason about the action
+                action_prompt = self.reasoner.select_action(
+                    step.description, 
+                    context={
+                        "goal": plan.goal,
+                        "history": context,
+                        "step": step.model_dump(),
+                        "constraints": constraints
+                    }
+                )
+                
+                # Execute via LLM engine
+                step_response = self.engine.run(action_prompt)
+                llm_responses.append({
+                    "step": step.step_number,
+                    "description": step.description,
+                    "response": step_response
+                })
+                
+                # Mark step as completed
+                step.status = "completed"
+                
+                # Store intermediate result in memory
+                self.memory.add(
+                    role="assistant",
+                    content=f"Step {step.step_number}: {step.description} - {str(step_response.get('response', step_response))}",
+                    metadata={"step_number": step.step_number, "plan_goal": plan.goal}
+                )
+            
+            # Combine all step responses
+            if llm_responses:
+                llm_response = {
+                    "response": "\n".join([f"Step {r['step']}: {r['description']}\n{r['response']}" for r in llm_responses]),
+                    "steps": llm_responses,
+                    "plan_status": {s.step_number: s.status for s in plan.steps}
+                }
+            else:
+                llm_response = {"response": "Plan execution completed", "plan_status": {s.step_number: s.status for s in plan.steps}}
         else:
             llm_response = {"response": "No plan steps generated"}
 

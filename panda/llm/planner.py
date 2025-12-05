@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from pydantic import BaseModel, Field
 import uuid
 from datetime import datetime
+
+if TYPE_CHECKING:
+    from .core import LLMEngine
+    from .memory import BaseMemory
 
 
 class PlanStep(BaseModel):
@@ -43,15 +47,76 @@ class BasePlanner(ABC):
 
 
 class Planner(BasePlanner):
-    """Planner that breaks down goals into structured execution plans."""
+    """Planner that breaks down goals into structured execution plans.
+    
+    Uses LLM Engine to generate intelligent plans and Memory to consider context.
+    """
+
+    def __init__(self, engine=None, memory=None):
+        """Initialize planner with optional LLM engine and memory dependencies.
+        
+        Args:
+            engine: LLMEngine instance for generating plans (optional)
+            memory: BaseMemory instance for context awareness (optional)
+        """
+        self._engine = engine
+        self._memory = memory
 
     def create_plan(self, goal: str, constraints: Optional[dict] = None) -> Plan:
         """Create a structured plan from a goal.
         
-        TODO: Replace with actual planning logic or LLM-assisted planning.
-        This should integrate with the LLM engine to generate intelligent plans.
+        Uses LLM engine if available, otherwise falls back to heuristic planning.
+        Considers memory context if available.
         """
-        # Placeholder heuristic plan - replace with LLM-generated plan
+        # Get context from memory if available
+        context = ""
+        if self._memory:
+            context = self._memory.get_context(limit=5)
+        
+        # Build planning prompt
+        constraints_str = f"\nConstraints: {constraints}" if constraints else ""
+        context_str = f"\nPrevious context:\n{context}" if context else ""
+        
+        planning_prompt = f"""Create a detailed execution plan for the following goal:
+Goal: {goal}{constraints_str}{context_str}
+
+Break this down into specific, actionable steps. For each step, provide:
+- A clear description
+- Required tools or APIs (if any)
+- Estimated duration
+- Dependencies on other steps (if any)
+
+Format the response as a structured plan."""
+
+        # Use LLM engine if available
+        if self._engine:
+            try:
+                llm_response = self._engine.run(planning_prompt)
+                # Parse LLM response into plan steps
+                # For now, extract structured data from response
+                response_text = str(llm_response.get("response", ""))
+                # TODO: Parse structured response into PlanStep objects
+                # For now, use heuristic fallback
+                steps = self._parse_llm_plan(response_text, goal)
+            except Exception:
+                # Fallback to heuristic if LLM fails
+                steps = self._create_heuristic_plan(goal, constraints)
+        else:
+            # Fallback to heuristic planning
+            steps = self._create_heuristic_plan(goal, constraints)
+        
+        return Plan(goal=goal, steps=steps)
+
+    def _parse_llm_plan(self, response_text: str, goal: str) -> List[PlanStep]:
+        """Parse LLM response into PlanStep objects.
+        
+        TODO: Implement proper parsing logic based on LLM response format.
+        """
+        # Placeholder: return heuristic plan for now
+        return self._create_heuristic_plan(goal)
+
+    def _create_heuristic_plan(self, goal: str, constraints: Optional[dict] = None) -> List[PlanStep]:
+        """Create a heuristic plan as fallback."""
         steps = [
             PlanStep(
                 step_number=1,
@@ -82,7 +147,7 @@ class Planner(BasePlanner):
                 status="pending"
             ),
         ]
-        return Plan(goal=goal, steps=steps)
+        return steps
 
 
 __all__ = ["BasePlanner", "Planner", "Plan", "PlanStep"]
