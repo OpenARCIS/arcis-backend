@@ -1,10 +1,9 @@
-# Example for panda/router/routes.py
-from fastapi import APIRouter, Depends, HTTPException
-from .models import UserLogin, GoalRequest, ExecutionPlanResponse # Importing from the code above
+from fastapi import APIRouter
+from .models import UserLogin, Token
 
 router = APIRouter()
 
-@router.post("/plan", response_model=ExecutionPlanResponse)
-async def create_plan(goal: GoalRequest):
-    # [cite_start]Logic to call LLM Orchestrator [cite: 7, 23]
-    pass
+# TODO change response model
+@router.post("/login", response_model=Token)
+async def create_plan(user: UserLogin):
+    return {"msg": "Hello World"}
