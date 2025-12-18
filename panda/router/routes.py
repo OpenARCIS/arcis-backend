@@ -1,9 +1,15 @@
 from fastapi import APIRouter
-from .models import UserLogin, Token
+
+from ..core.llm.factory import LLMProvider, LLMFactory
+from panda import Config
+
+from panda.agents.graph import build_and_run_graph
 
 router = APIRouter()
 
 # TODO change response model
-@router.post("/login", response_model=Token)
-async def create_plan(user: UserLogin):
-    return {"msg": "Hello World"}
+@router.get("/testmodelflash")
+async def test_flash():
+    await build_and_run_graph()
+
+    return {"response": 'hi'}

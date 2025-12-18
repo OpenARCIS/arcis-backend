@@ -8,7 +8,9 @@ if not os.environ.get("ENV"):
 class Config(object):
     try: 
         DATABASE_URL = getenv("DATABASE_URL")
-        DATABASE_NAME = getenv("DATABASE_NAME", 'default_db')
+        DATABASE_NAME = getenv("DATABASE_NAME", 'panda_db')
     except:
         print("CORE : Essential Configs are missing")
         exit(1)
+
+    GEMINI_API = getenv('GEMINI_API')

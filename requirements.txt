@@ -3,3 +3,7 @@ python-dotenv
 fastapi[standard]
 pydantic
 uvicorn
+httpx 
+google-genai
+tenacity
+langchain
