@@ -4,7 +4,8 @@ from panda import Config
 
 # easy references
 COLLECTIONS = {
-    'users': 'users'
+    'users': 'users',
+    'processed_emails': 'processed_emails'
 }
 
 class Database:
@@ -26,6 +27,10 @@ class Database:
 
     async def _create_indexes(self):
         await self.db[COLLECTIONS['users']].create_index([("user_id", 1)])
+        await self.db[COLLECTIONS['processed_emails']].create_index(
+            [("email_id", 1)], 
+            unique=True
+        )
 
 
 mongo = Database()

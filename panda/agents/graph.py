@@ -69,3 +69,7 @@ async def build_and_run_graph():
     print("\n--- Test 2 ---")
     inputs = {"messages": [BaseMessage("I am feeling very stressed today")]}
     await app.ainvoke(inputs)
+
+    print("\n--- Test 3 ---")
+    inputs = {"messages": [BaseMessage("Send a mail to john doe about the meeting")]}
+    await app.ainvoke(inputs)
