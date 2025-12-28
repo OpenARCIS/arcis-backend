@@ -6,7 +6,9 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
 from .router.routes import router
+from panda.router.gmail import gmail_router
 from .database.mongo.connection import mongo
+from panda.core.tools.gmail import poll_gmail_updates
 
 async def some_cron_jobs():
     try:
@@ -16,9 +18,11 @@ async def some_cron_jobs():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    #await mongo.connect()
+    await mongo.connect()
     
     cron_task = asyncio.create_task(some_cron_jobs())
+
+    asyncio.create_task(poll_gmail_updates("test_user"))
     
     yield
     
@@ -28,7 +32,7 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         pass
         
-    #await mongo.disconnect()
+    await mongo.disconnect()
 
 
 api_server = FastAPI(title="PANDA - API", lifespan=lifespan)
@@ -40,7 +44,9 @@ api_server.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 api_server.include_router(router)
+api_server.include_router(gmail_router)
 
 
 if __name__ == '__main__':

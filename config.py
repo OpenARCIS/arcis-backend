@@ -14,3 +14,7 @@ class Config(object):
         exit(1)
 
     GEMINI_API = getenv('GEMINI_API')
+
+    OAUTHLIB_INSECURE_TRANSPORT = getenv('OAUTHLIB_INSECURE_TRANSPORT', 1) # only for local testing
+    GOOGLE_CLIENT_SECRETS_FILE = getenv('CLIENT_SECRETS_FILE', 'gmail_secret.json')
+    GOOGLE_REDIRECT_URI = getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/')
