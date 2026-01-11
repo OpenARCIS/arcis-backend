@@ -7,21 +7,18 @@ from panda.models.agents.response import SupervisorRouterResponse
 
 
 
-llm_client = LLMFactory.create_client(
-    provider=LLMProvider.GEMINI,
-    model_name="xiaomi/mimo-v2-flash:free",
-)
-
-supervisor_llm = llm_client.with_structured_output(SupervisorRouterResponse)
 
 supervisor_prompt = ChatPromptTemplate.from_messages([
         ("system", MASTER_SUPERVISOR_PROMPT),
         MessagesPlaceholder(variable_name="messages"),
     ])
 
-chain = supervisor_prompt | supervisor_llm
-
 async def supervisor_node(state: MasterState):
+    llm_client = LLMFactory.get_client_for_agent("supervisor")
+    supervisor_llm = llm_client.with_structured_output(SupervisorRouterResponse)
+    
+    chain = supervisor_prompt | supervisor_llm
+    
     decision = await chain.ainvoke({
         "messages": state["messages"]
     })

@@ -11,3 +11,5 @@ aiogoogle
 urlextract
 langchain-google-genai
 langchain-openai
+langchain-mistralai
+beautifulsoup4

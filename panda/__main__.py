@@ -7,7 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .router.routes import router
 from panda.router.gmail import gmail_router
+from panda.router.settings import settings_router
 from .database.mongo.connection import mongo
+from panda.core.llm.config_manager import config_manager
 from panda.core.tools.gmail import poll_gmail_updates
 
 async def some_cron_jobs():
@@ -19,6 +21,7 @@ async def some_cron_jobs():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await mongo.connect()
+    await config_manager.load_config()
     
     cron_task = asyncio.create_task(some_cron_jobs())
 
@@ -47,6 +50,7 @@ api_server.add_middleware(
 
 api_server.include_router(router)
 api_server.include_router(gmail_router)
+api_server.include_router(settings_router)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,8 @@ from panda import Config
 # easy references
 COLLECTIONS = {
     'users': 'users',
-    'processed_emails': 'processed_emails'
+    'processed_emails': 'processed_emails',
+    'settings': 'settings'
 }
 
 class Database:
@@ -15,6 +16,8 @@ class Database:
     def __init__(self):
         self.mongodb_url = Config.DATABASE_URL
         self.database_name = Config.DATABASE_NAME
+        self.client = None
+        self.db = None
         
     async def connect(self):
         self.client = AsyncIOMotorClient(self.mongodb_url)
