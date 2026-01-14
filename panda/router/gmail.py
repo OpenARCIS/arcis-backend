@@ -3,7 +3,7 @@ from aiogoogle import Aiogoogle
 from datetime import datetime
 
 from panda import Config
-from panda.core.tools.gmail import SCOPES, get_client_creds
+from panda.core.external_api.gmail import SCOPES, get_client_creds
 from panda.database.mongo.connection import mongo, COLLECTIONS
 
 gmail_router = APIRouter()

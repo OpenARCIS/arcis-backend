@@ -10,7 +10,7 @@ from panda.router.gmail import gmail_router
 from panda.router.settings import settings_router
 from .database.mongo.connection import mongo
 from panda.core.llm.config_manager import config_manager
-from panda.core.tools.gmail import poll_gmail_updates
+from panda.core.external_api.gmail import poll_gmail_updates
 
 async def some_cron_jobs():
     try:

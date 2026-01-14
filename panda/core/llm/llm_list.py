@@ -56,7 +56,182 @@ GROQ = [
     "whisper-large-v3-turbo"
 ]
 
-OPENROUTER = []
+OPENROUTER_MODELS = {
+    "allenai/molmo-2-8b:free": {
+        "parameters": "8B",
+        "context": "128k",
+        "usage": "Video grounding & counting",
+        "speed": "40 - 60 tps"
+    },
+    "xiaomi/mimo-v2-flash:free": {
+        "parameters": "309B (15B active)",
+        "context": "256k",
+        "usage": "Production-grade agents; high-speed coding & math reasoning",
+        "speed": "150+ tps"
+    },
+    "nvidia/nemotron-3-nano-30b-a3b:free": {
+        "parameters": "32B (3.5B active)",
+        "context": "1M",
+        "usage": "Math reasoning & tool-use",
+        "speed": "80 - 120 tps"
+    },
+    "mistralai/devstral-2512:free": {
+        "parameters": "123B",
+        "context": "256k",
+        "usage": "Agentic software engineering",
+        "speed": "15-25 tps"
+    },
+    "arcee-ai/trinity-mini:free": {
+        "parameters": "26B (3B active)",
+        "context": "128k",
+        "usage": "Multi-step agent workflows",
+        "speed": "100 - 150 tps"
+    },
+    "tngtech/tng-r1t-chimera:free": {
+        "parameters": "671B (37B active)",
+        "context": "131k",
+        "usage": "Balanced reasoning; reduces verbose output by 40% vs R1",
+        "speed": "15 - 20 tps"
+    },
+    "nvidia/nemotron-nano-12b-v2-vl:free": {
+        "parameters": "12B",
+        "context": "128k",
+        "usage": "On-device vision-language",
+        "speed": "45 - 70 tps"
+    },
+    "nvidia/nemotron-nano-9b-v2:free": {
+        "parameters": "9B",
+        "context": "128k",
+        "usage": "Low-latency agentic tasks",
+        "speed": "90 - 130 tps"
+    },
+    "openai/gpt-oss-120b:free": {
+        "parameters": "120B",
+        "context": "128k",
+        "usage": "Open-source heavy reasoning",
+        "speed": "10 - 18 tps"
+    },
+    "openai/gpt-oss-20b:free": {
+        "parameters": "20B",
+        "context": "128k",
+        "usage": "Consumer-grade reasoning",
+        "speed": "50 - 80 tps"
+    },
+    "z-ai/glm-4.5-air:free": {
+        "parameters": "100B+ (MoE)",
+        "context": "128k",
+        "usage": "Balanced performance/speed",
+        "speed": "30 - 50 tps"
+    },
+    "qwen/qwen3-coder:free": {
+        "parameters": "30B - 480B",
+        "context": "256k+",
+        "usage": "Expert coding & repo analysis",
+        "speed": "12 - 45 tps"
+    },
+    "moonshotai/kimi-k2:free": {
+        "parameters": "1T (32B active)",
+        "context": "128k",
+        "usage": "Sequential tool calls/Thinking",
+        "speed": "15 - 20 tps"
+    },
+    "cognitivecomputations/dolphin-mistral-24b-venice-edition:free": {
+        "parameters": "24B",
+        "context": "32k",
+        "usage": "Uncensored creative writing",
+        "speed": "40 - 65 tps"
+    },
+    "google/gemma-3n-e2b-it:free": {
+        "parameters": "5B / 8B",
+        "context": "32k",
+        "usage": "Real-time on-device audio/video",
+        "speed": "N/A"
+    },
+    "tngtech/deepseek-r1t2-chimera:free": {
+        "parameters": "671B (37B active)",
+        "context": "163k",
+        "usage": "Advanced STEM reasoning; 2x faster than R1-0528",
+        "speed": "20 - 30 tps"
+    },
+    "deepseek/deepseek-r1-0528:free": {
+        "parameters": "671B (37B active)",
+        "context": "128k",
+        "usage": "SOTA mathematical reasoning",
+        "speed": "10 - 25 tps"
+    },
+    "google/gemma-3n-e4b-it:free": {
+        "parameters": "8B (3B memory)",
+        "context": "32k",
+        "usage": "Mobile Multimodal; real-time video/audio on edge",
+        "speed": "80 - 120 tps"
+    },
+    "qwen/qwen3-4b:free": {
+        "parameters": "4B",
+        "context": "262k",
+        "usage": "Local long-context; handling massive codebases on laptops",
+        "speed": "120 - 160 tps"
+    },
+    "mistralai/mistral-small-3.1-24b-instruct:free": {
+        "parameters": "24B",
+        "context": "128k",
+        "usage": "Enterprise-grade dialogue",
+        "speed": "150+ tps"
+    },
+    "google/gemma-3-4b-it:free": {
+        "parameters": "4B",
+        "context": "128k",
+        "usage": "Fast mobile vision tasks",
+        "speed": "120+ tps"
+    },
+    "google/gemma-3-12b-it:free": {
+        "parameters": "12B",
+        "context": "128k",
+        "usage": "Mid-range multimodal chat",
+        "speed": "60 - 85 tps"
+    },
+    "google/gemma-3-27b-it:free": {
+        "parameters": "27B",
+        "context": "128k",
+        "usage": "High-tier general multimodal",
+        "speed": "30 - 45 tps"
+    },
+    "meta-llama/llama-3.3-70b-instruct:free": {
+        "parameters": "70B",
+        "context": "128k",
+        "usage": "Reliable multilingual reasoning",
+        "speed": "50 - 70 tps"
+    },
+    "meta-llama/llama-3.2-3b-instruct:free": {
+        "parameters": "3B",
+        "context": "128k",
+        "usage": "Mobile summarization",
+        "speed": "150+ tps"
+    },
+    "qwen/qwen-2.5-vl-7b-instruct:free": {
+        "parameters": "7B",
+        "context": "32k",
+        "usage": "Visual grounding & OCR",
+        "speed": "60 - 90 tps"
+    },
+    "nousresearch/hermes-3-llama-3.1-405b:free": {
+        "parameters": "405B",
+        "context": "128k",
+        "usage": "Frontier-level open reasoning",
+        "speed": "5 - 12 tps"
+    },
+    "meta-llama/llama-3.1-405b-instruct:free": {
+        "parameters": "405B (Dense)",
+        "context": "128k",
+        "usage": "Enterprise foundation; synthetic data & complex translations",
+        "speed": "5 - 12 tps"
+    },
+    "mistralai/mistral-7b-instruct:free": {
+        "parameters": "7B",
+        "context": "32k",
+        "usage": "Lightweight general purpose",
+        "speed": "90 - 110 tps"
+    }
+}
 
 OPENAI = [
     "gpt-4o", 

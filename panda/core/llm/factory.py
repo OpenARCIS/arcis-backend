@@ -1,20 +1,14 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
-try:
-    from langchain_mistralai import ChatMistralAI
-except ImportError:
-    ChatMistralAI = None
+from langchain_mistralai import ChatMistralAI
 
 from panda.models.errors import InvalidAPIKey
 from panda.models.llm import LLMProvider
 from panda import Config
-
-
 from panda.core.llm.config_manager import config_manager
 
 
 class LLMFactory:
-    # TODO: Fetch this from database or external config file
     
     @staticmethod
     def get_model_config(agent_name: str) -> dict:
