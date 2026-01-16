@@ -6,7 +6,7 @@ from panda.models.agents.state import AgentState
 from panda.models.agents.response import SupervisorRouterResponse
 
 
-def supervisor_node(state: AgentState) -> AgentState:
+async def supervisor_node(state: AgentState) -> AgentState:
 
     pending_steps = [s for s in state["plan"] if s["status"] == "pending"]
     
@@ -44,7 +44,7 @@ Determine the next node to route to.""")
         step_agent=current_step["assigned_agent"]
     )
     
-    routing_response = supervisor_llm.invoke(messages)
+    routing_response = await supervisor_llm.ainvoke(messages)
     
     print(f"\n🎯 SUPERVISOR: Routing to {routing_response.next_node}")
     print(f"   Reason: {routing_response.reasoning}\n")

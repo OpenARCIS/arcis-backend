@@ -13,3 +13,4 @@ langchain-google-genai
 langchain-openai
 langchain-mistralai
 beautifulsoup4
+duckduckgo-search

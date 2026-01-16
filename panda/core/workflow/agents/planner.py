@@ -7,7 +7,7 @@ from panda.models.agents.response import PlanModel
 from panda.core.llm.prompts import PLANNER_PROMPT
 
 
-def planner_node(state: AgentState) -> AgentState:
+async def planner_node(state: AgentState) -> AgentState:
     planner_prompt = ChatPromptTemplate.from_messages([
         ("system", PLANNER_PROMPT),
         ("human", "User Request: {input}\n\nGenerate a detailed execution plan.")
@@ -18,7 +18,7 @@ def planner_node(state: AgentState) -> AgentState:
     planner_llm = llm_client.with_structured_output(PlanModel)
 
     messages = planner_prompt.format_messages(input=state["input"])
-    plan_response = planner_llm.invoke(messages)
+    plan_response = await planner_llm.ainvoke(messages)
     
     plan_steps: List[PlanStep] = [
         {

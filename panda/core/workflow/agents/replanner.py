@@ -6,7 +6,7 @@ from panda.models.agents.response import ReplannerResponse
 from panda.core.llm.prompts import REPLANNER_PROMPT
 
 
-def replanner_node(state: AgentState) -> AgentState:
+async def replanner_node(state: AgentState) -> AgentState:
     """Update state based on execution results and determine next steps."""
     
     current_step = next(
@@ -41,7 +41,7 @@ Evaluate the execution and determine next actions.""")
         plan_summary=plan_summary
     )
     
-    response = replanner_llm.invoke(messages)
+    response = await replanner_llm.ainvoke(messages)
     
     # Update plan
     updated_plan = state["plan"].copy()

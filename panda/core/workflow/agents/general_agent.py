@@ -3,10 +3,12 @@ from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import GENERAL_AGENT_PROMPT
 
-#.... import general_tools
+from panda.core.workflow.tools.web_search import web_search
+
+general_tools = [web_search]
 
 
-def general_agent_node(state: AgentState) -> AgentState:
+async def general_agent_node(state: AgentState) -> AgentState:
     
     current_step = next(
         (s for s in state["plan"] if s["status"] == "in_progress"),
@@ -27,7 +29,7 @@ Execute this task and gather necessary information.""")
     ])
     
     llm_client = LLMFactory.get_client_for_agent("general_agent")
-    #general_llm = llm_client.bind_tools(general_tools)
+    general_llm = llm_client.bind_tools(general_tools)
     
     messages = general_prompt.format_messages(
         task_description=current_step["description"],
@@ -35,6 +37,7 @@ Execute this task and gather necessary information.""")
     )
     
     print(f"\n🔧 GENERAL AGENT: Executing - {current_step['description']}")
+    llm_response = await general_llm.ainvoke(messages)
     tool_output = f"General task completed: {current_step['description']}"
     print(f"   Result: {tool_output}\n")
     

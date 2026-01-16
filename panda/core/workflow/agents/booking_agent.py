@@ -5,7 +5,7 @@ from panda.core.llm.prompts import BOOKING_AGENT_PROMPT
 #....... import booking_tools
 
 
-def booking_agent_node(state: AgentState) -> AgentState:
+async def booking_agent_node(state: AgentState) -> AgentState:
     
     current_step = next(
         (s for s in state["plan"] if s["status"] == "in_progress"),

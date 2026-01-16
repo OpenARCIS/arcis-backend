@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_AGENTS_CONFIG = {
     "supervisor": {
         "provider": LLMProvider.OPENROUTER,
-        "model_name": "nvidia/nemotron-3-nano-30b-a3b:free",
+        "model_name": "arcee-ai/trinity-mini:free",
         "temperature": 0.7
     },
     "planner": {
@@ -19,22 +19,22 @@ DEFAULT_AGENTS_CONFIG = {
     },
     "email_agent": {
         "provider": LLMProvider.OPENROUTER,
-        "model_name": "xiaomi/mimo-v2-flash:free",
+        "model_name": "arcee-ai/trinity-mini:free",
         "temperature": 0.7
     },
     "booking_agent": {
         "provider": LLMProvider.OPENROUTER,
-        "model_name": "nvidia/nemotron-3-nano-30b-a3b:free",
+        "model_name": "arcee-ai/trinity-mini:free",
         "temperature": 0.7
     },
     "replanner": {
         "provider": LLMProvider.OPENROUTER,
-        "model_name": "openai/gpt-oss-120b:free",
+        "model_name": "arcee-ai/trinity-mini:free",
         "temperature": 0.7
     },
     "health_monitor": {
         "provider": LLMProvider.OPENROUTER,
-        "model_name": "nvidia/nemotron-3-nano-30b-a3b:free",
+        "model_name": "arcee-ai/trinity-mini:free",
         "temperature": 0.7
     }
 }
