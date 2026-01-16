@@ -2,7 +2,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import BOOKING_AGENT_PROMPT
-from panda.core.workflow.tools.booking import booking_tools
+from panda.core.workflow_manual.tools.booking import booking_tools
 
 
 async def booking_agent_node(state: AgentState) -> AgentState:

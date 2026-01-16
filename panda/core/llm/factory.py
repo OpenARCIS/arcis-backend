@@ -68,7 +68,7 @@ class LLMFactory:
                 },
             )
 
-        elif provider == LLMProvider.MISTRAL:
+        elif provider == LLMProvider.MISTRAL_AI:
             if ChatMistralAI is None:
                 raise ImportError("langchain-mistralai is not installed. Please install it to use Mistral provider.")
             

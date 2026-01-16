@@ -9,7 +9,7 @@ class LLMProvider(Enum):
     ANTHROPIC = "anthropic"
     GEMINI = "gemini"
     OPENROUTER = "openrouter"
-    MISTRAL = "mistral"
+    MISTRAL_AI = "mistral"
     CEREBRAS = "cerebras"
     GROQ = "groq"
 

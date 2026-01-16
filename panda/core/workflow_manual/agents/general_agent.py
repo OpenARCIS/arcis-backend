@@ -3,7 +3,7 @@ from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import GENERAL_AGENT_PROMPT
 
-from panda.core.workflow.tools.web_search import web_search
+from panda.core.workflow_manual.tools.web_search import web_search
 
 general_tools = [web_search]
 

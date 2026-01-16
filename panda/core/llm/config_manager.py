@@ -8,32 +8,32 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_AGENTS_CONFIG = {
     "supervisor": {
-        "provider": LLMProvider.OPENROUTER,
-        "model_name": "arcee-ai/trinity-mini:free",
-        "temperature": 0.7
+        "provider": LLMProvider.MISTRAL_AI,
+        "model_name": "ministral-8b-2410",
+        "temperature": 0.1
     },
     "planner": {
-        "provider": LLMProvider.OPENROUTER,
-        "model_name": "nvidia/nemotron-3-nano-30b-a3b:free",
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
         "temperature": 0.7
     },
     "email_agent": {
-        "provider": LLMProvider.OPENROUTER,
-        "model_name": "arcee-ai/trinity-mini:free",
-        "temperature": 0.7
+        "provider": LLMProvider.GROQ,
+        "model_name": "qwen/qwen3-32b",
+        "temperature": 0.5
     },
     "booking_agent": {
-        "provider": LLMProvider.OPENROUTER,
-        "model_name": "arcee-ai/trinity-mini:free",
-        "temperature": 0.7
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
+        "temperature": 0.5
     },
     "replanner": {
-        "provider": LLMProvider.OPENROUTER,
-        "model_name": "arcee-ai/trinity-mini:free",
-        "temperature": 0.7
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
+        "temperature": 0.5
     },
     "health_monitor": {
-        "provider": LLMProvider.OPENROUTER,
+        "provider": LLMProvider.GROQ,
         "model_name": "arcee-ai/trinity-mini:free",
         "temperature": 0.7
     }

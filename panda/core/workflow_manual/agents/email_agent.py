@@ -4,7 +4,7 @@ from langchain_core.messages import ToolMessage
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import EMAIL_AGENT_PROMPT
-from panda.core.workflow.tools.email import email_tools
+from panda.core.workflow_manual.tools.email import email_tools
 
 
 async def email_agent_node(state: AgentState) -> AgentState:

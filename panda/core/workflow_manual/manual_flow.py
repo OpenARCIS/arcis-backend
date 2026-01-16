@@ -1,12 +1,12 @@
 from langgraph.graph import StateGraph, END
 
 from panda.models.agents.state import AgentState
-from panda.core.workflow.agents.planner import planner_node
-from panda.core.workflow.agents.supervisor import supervisor_node, supervisor_router
-from panda.core.workflow.agents.email_agent import email_agent_node
-from panda.core.workflow.agents.booking_agent import booking_agent_node
-from panda.core.workflow.agents.general_agent import general_agent_node
-from panda.core.workflow.agents.replanner import replanner_node, replanner_router
+from panda.core.workflow_manual.agents.planner import planner_node
+from panda.core.workflow_manual.agents.supervisor import supervisor_node, supervisor_router
+from panda.core.workflow_manual.agents.email_agent import email_agent_node
+from panda.core.workflow_manual.agents.booking_agent import booking_agent_node
+from panda.core.workflow_manual.agents.general_agent import general_agent_node
+from panda.core.workflow_manual.agents.replanner import replanner_node, replanner_router
 
 
 def create_workflow() -> StateGraph:

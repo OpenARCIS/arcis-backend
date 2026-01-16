@@ -1,60 +1,305 @@
-MISTRAL_AI = [
-    "codestral-2405",
-    "codestral-2501",
-    "codestral-mamba-2407",
-    "ministral-3b-2410",
-    "ministral-8b-2410",
-    "mistral-embed",
-    "mistral-large-2402",
-    "mistral-large-2407",
-    "mistral-large-2411",
-    "mistral-medium",
-    "mistral-moderation-2411",
-    "mistral-saba-2502",
-    "mistral-small-2402",
-    "mistral-small-2409",
-    "mistral-small-2501",
-    "mistral-small-2503",
-    "open-mistral-7b",
-    "open-mistral-nemo",
-    "open-mixtral-8x22b",
-    "open-mixtral-8x7b",
-    "pixtral-12b-2409",
-    "pixtral-large-2411"
-]
+MISTRAL_AI = {
+    "codestral-2405": {
+        "parameters": "22B",
+        "context": "32k",
+        "usage": "Code completion & generation",
+        "speed": "Fast"
+    },
+    "codestral-2501": {
+        "parameters": "<100B",
+        "context": "256k",
+        "usage": "Advanced code generation (v2)",
+        "speed": "Fast"
+    },
+    "codestral-mamba-2407": {
+        "parameters": "Unknown",
+        "context": "256k",
+        "usage": "Long-context code generation",
+        "speed": "Fast"
+    },
+    "ministral-3b-2410": {
+        "parameters": "3B",
+        "context": "128k",
+        "usage": "Edge AI & low-latency tasks",
+        "speed": "Ultra-fast"
+    },
+    "ministral-8b-2410": {
+        "parameters": "8B",
+        "context": "128k",
+        "usage": "Complex edge tasks",
+        "speed": "Ultra-fast"
+    },
+    "mistral-embed": {
+        "parameters": "N/A",
+        "context": "N/A",
+        "usage": "Text embeddings",
+        "speed": "Fast"
+    },
+    "mistral-large-2402": {
+        "parameters": "123B",
+        "context": "32k",
+        "usage": "Complex reasoning (Legacy)",
+        "speed": "Moderate"
+    },
+    "mistral-large-2407": {
+        "parameters": "123B",
+        "context": "128k",
+        "usage": "Flagship reasoning (v2)",
+        "speed": "Moderate"
+    },
+    "mistral-large-2411": {
+        "parameters": "123B",
+        "context": "128k",
+        "usage": "Latest flagship reasoning",
+        "speed": "Moderate"
+    },
+    "mistral-medium": {
+        "parameters": "Unknown",
+        "context": "32k",
+        "usage": "Balanced performance (Legacy)",
+        "speed": "Moderate"
+    },
+    "mistral-moderation-2411": {
+        "parameters": "Unknown",
+        "context": "N/A",
+        "usage": "Content safety & moderation",
+        "speed": "Fast"
+    },
+    "mistral-saba-2502": {
+        "parameters": "Unknown",
+        "context": "N/A",
+        "usage": "Middle East & South Asia optimized",
+        "speed": "Fast"
+    },
+    "mistral-small-2402": {
+        "parameters": "Small",
+        "context": "32k",
+        "usage": "Cost-effective reasoning",
+        "speed": "Fast"
+    },
+    "mistral-small-2409": {
+        "parameters": "22B",
+        "context": "32k",
+        "usage": "Improved cost-effective reasoning",
+        "speed": "Fast"
+    },
+    "mistral-small-2501": {
+        "parameters": "24B",
+        "context": "32k",
+        "usage": "Latest small model",
+        "speed": "Fast"
+    },
+    "mistral-small-2503": {
+        "parameters": "24B",
+        "context": "32k",
+        "usage": "Updated small model",
+        "speed": "Fast"
+    },
+    "open-mistral-7b": {
+        "parameters": "7B",
+        "context": "32k",
+        "usage": "General purpose & efficiency",
+        "speed": "Fast"
+    },
+    "open-mistral-nemo": {
+        "parameters": "12B",
+        "context": "128k",
+        "usage": "Research & experimentation",
+        "speed": "Fast"
+    },
+    "open-mixtral-8x22b": {
+        "parameters": "141B",
+        "context": "64k",
+        "usage": "Open-source flagship prowess",
+        "speed": "Moderate"
+    },
+    "open-mixtral-8x7b": {
+        "parameters": "47B",
+        "context": "32k",
+        "usage": "High throughput text generation",
+        "speed": "High"
+    },
+    "pixtral-12b-2409": {
+        "parameters": "12B",
+        "context": "128k",
+        "usage": "Multimodal (Text + Images)",
+        "speed": "Fast"
+    },
+    "pixtral-large-2411": {
+        "parameters": "124B",
+        "context": "128k",
+        "usage": "Flagship multimodal",
+        "speed": "Moderate"
+    }
+}
 
-CEREBRAS = [
-    "gpt-oss-120b",
-    "llama-3.3-70b",
-    "llama3.1-8b",
-    "qwen-3-235b-a22b-instruct-2507",
-    "qwen-3-32b",
-    "zai-glm-4.6",
-    "zai-glm-4.7"
-]
+CEREBRAS = {
+    "gpt-oss-120b": {
+        "parameters": "120B",
+        "context": "128k",
+        "usage": "Open-source heavy reasoning",
+        "speed": "~3000 tps"
+    },
+    "llama-3.3-70b": {
+        "parameters": "70B",
+        "context": "128k",
+        "usage": "High-performance general reasoning",
+        "speed": "~2100 tps"
+    },
+    "llama3.1-8b": {
+        "parameters": "8B",
+        "context": "128k",
+        "usage": "Fast, lightweight reasoning",
+        "speed": "Ultra-fast"
+    },
+    "qwen-3-235b-a22b-instruct-2507": {
+        "parameters": "235B",
+        "context": "131k",
+        "usage": "Massive scale reasoning",
+        "speed": "~1500 tps"
+    },
+    "qwen-3-32b": {
+        "parameters": "32B",
+        "context": "131k",
+        "usage": "Balanced performance & speed",
+        "speed": "~2600 tps"
+    },
+    "zai-glm-4.6": {
+        "parameters": "Unknown",
+        "context": "Unknown",
+        "usage": "Unknown",
+        "speed": "Unknown"
+    },
+    "zai-glm-4.7": {
+        "parameters": "Unknown",
+        "context": "Unknown",
+        "usage": "Unknown",
+        "speed": "Unknown"
+    }
+}
 
-GROQ = [
-    "allam-2-7b",
-    "canopylabs/orpheus-arabic-saudi",
-    "canopylabs/orpheus-v1-english",
-    "groq/compound",
-    "groq/compound-mini",
-    "llama-3.1-8b-instant",
-    "llama-3.3-70b-versatile",
-    "meta-llama/llama-4-maverick-17b-128e-instruct",
-    "meta-llama/llama-4-scout-17b-16e-instruct",
-    "meta-llama/llama-guard-4-12b",
-    "meta-llama/llama-prompt-guard-2-22m",
-    "meta-llama/llama-prompt-guard-2-86m",
-    "moonshotai/kimi-k2-instruct",
-    "moonshotai/kimi-k2-instruct-0905",
-    "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b",
-    "openai/gpt-oss-safeguard-20b",
-    "qwen/qwen3-32b",
-    "whisper-large-v3",
-    "whisper-large-v3-turbo"
-]
+GROQ = {
+    "allam-2-7b": {
+        "parameters": "7B",
+        "context": "Unknown",
+        "usage": "Specialized Arabic/English",
+        "speed": "Fast"
+    },
+    "canopylabs/orpheus-arabic-saudi": {
+        "parameters": "Unknown",
+        "context": "Unknown",
+        "usage": "Saudi Arabic dialect",
+        "speed": "Fast"
+    },
+    "canopylabs/orpheus-v1-english": {
+        "parameters": "Unknown",
+        "context": "Unknown",
+        "usage": "English language tasks",
+        "speed": "Fast"
+    },
+    "groq/compound": {
+        "parameters": "Unknown",
+        "context": "Unknown",
+        "usage": "Groq proprietary compound",
+        "speed": "Ultra-fast"
+    },
+    "groq/compound-mini": {
+        "parameters": "Unknown",
+        "context": "Unknown",
+        "usage": "Small Groq compound",
+        "speed": "Ultra-fast"
+    },
+    "llama-3.1-8b-instant": {
+        "parameters": "8B",
+        "context": "131k",
+        "usage": "Instant text generation",
+        "speed": "~560 tps"
+    },
+    "llama-3.3-70b-versatile": {
+        "parameters": "70B",
+        "context": "128k",
+        "usage": "Versatile general intelligence",
+        "speed": "~276 tps"
+    },
+    "meta-llama/llama-4-maverick-17b-128e-instruct": {
+        "parameters": "17B",
+        "context": "Unknown",
+        "usage": "Maverick variant",
+        "speed": "Fast"
+    },
+    "meta-llama/llama-4-scout-17b-16e-instruct": {
+        "parameters": "17B",
+        "context": "Unknown",
+        "usage": "Scout variant",
+        "speed": "Fast"
+    },
+    "meta-llama/llama-guard-4-12b": {
+        "parameters": "12B",
+        "context": "8k",
+        "usage": "Safety & moderation",
+        "speed": "Fast"
+    },
+    "meta-llama/llama-prompt-guard-2-22m": {
+        "parameters": "22M",
+        "context": "Unknown",
+        "usage": "Lightweight prompt safety",
+        "speed": "Ultra-fast"
+    },
+    "meta-llama/llama-prompt-guard-2-86m": {
+        "parameters": "86M",
+        "context": "Unknown",
+        "usage": "Lightweight prompt safety",
+        "speed": "Ultra-fast"
+    },
+    "moonshotai/kimi-k2-instruct": {
+        "parameters": "Unknown",
+        "context": "128k",
+        "usage": "Reasoning & instruction following",
+        "speed": "Fast"
+    },
+    "moonshotai/kimi-k2-instruct-0905": {
+        "parameters": "Unknown",
+        "context": "128k",
+        "usage": "Updated Kimi model",
+        "speed": "Fast"
+    },
+    "openai/gpt-oss-120b": {
+        "parameters": "120B",
+        "context": "128k",
+        "usage": "Open-source GPT alternative",
+        "speed": "~300 tps"
+    },
+    "openai/gpt-oss-20b": {
+        "parameters": "20B",
+        "context": "128k",
+        "usage": "Smaller GPT alternative",
+        "speed": "Fast"
+    },
+    "openai/gpt-oss-safeguard-20b": {
+        "parameters": "20B",
+        "context": "Unknown",
+        "usage": "Safeguard model",
+        "speed": "Fast"
+    },
+    "qwen/qwen3-32b": {
+        "parameters": "32B",
+        "context": "131k",
+        "usage": "Qwen coding & general tasks",
+        "speed": "Fast"
+    },
+    "whisper-large-v3": {
+        "parameters": "1.5B",
+        "context": "N/A",
+        "usage": "Speech recognition",
+        "speed": "Fast"
+    },
+    "whisper-large-v3-turbo": {
+        "parameters": "1.5B",
+        "context": "N/A",
+        "usage": "Fast speech recognition",
+        "speed": "Ultra-fast"
+    }
+}
 
 OPENROUTER = {
     "allenai/molmo-2-8b:free": {
@@ -233,24 +478,73 @@ OPENROUTER = {
     }
 }
 
-OPENAI = [
-    "gpt-4o", 
-    "gpt-4-turbo", 
-    "gpt-3.5-turbo"
-]
+OPENAI = {
+    "gpt-4o": {
+        "parameters": "Unknown",
+        "context": "128k",
+        "usage": "Flagship multimodal",
+        "speed": "Fast"
+    },
+    "gpt-4-turbo": {
+        "parameters": "Unknown",
+        "context": "128k",
+        "usage": "High-capability reasoning",
+        "speed": "Moderate"
+    },
+    "gpt-3.5-turbo": {
+        "parameters": "Unknown",
+        "context": "16k",
+        "usage": "Fast, cost-effective chat",
+        "speed": "Fast"
+    }
+}
 
-GEMINI = [
-    "gemini-1.5-flash", 
-    "gemini-1.5-pro", 
-    "gemini-1.0-pro"
-]
+GEMINI = {
+    "gemini-1.5-flash": {
+        "parameters": "Unknown",
+        "context": "1M",
+        "usage": "High-volume, low-latency multimodal",
+        "speed": "High"
+    },
+    "gemini-1.5-pro": {
+        "parameters": "Unknown",
+        "context": "2M",
+        "usage": "Complex multimodal reasoning",
+        "speed": "Moderate"
+    },
+    "gemini-1.0-pro": {
+        "parameters": "Unknown",
+        "context": "32k",
+        "usage": "General text & code",
+        "speed": "Fast"
+    }
+}
 
-ANTHROPIC = [
-    "claude-3-5-sonnet-20240620", 
-    "claude-3-opus-20240229", 
-    "claude-3-sonnet-20240229", 
-    "claude-3-haiku-20240307"
-]
+ANTHROPIC = {
+    "claude-3-5-sonnet-20240620": {
+        "parameters": "Unknown",
+        "context": "200k",
+        "usage": "Highest intelligence & speed",
+        "speed": "Fast"
+    },
+    "claude-3-opus-20240229": {
+        "parameters": "Unknown",
+        "context": "200k",
+        "usage": "Complex task reasoning",
+        "speed": "Moderate"
+    },
+    "claude-3-sonnet-20240229": {
+        "parameters": "Unknown",
+        "context": "200k",
+        "usage": "Balanced enterprise workload",
+        "speed": "Fast"
+    },
+    "claude-3-haiku-20240307": {
+        "parameters": "Unknown",
+        "context": "200k",
+        "usage": "Instant response & speed",
+        "speed": "Ultra-fast"
+    }
+}
 
-OLLAMA = []
-
+OLLAMA = {}
