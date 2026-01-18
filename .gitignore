@@ -210,3 +210,4 @@ gmail_secret.json
 google_credentials.json
 tests/
 .VSCodeCounter
+API_SCHEMA.md
