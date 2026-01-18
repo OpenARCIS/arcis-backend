@@ -15,7 +15,7 @@ DEFAULT_AGENTS_CONFIG = {
     "planner": {
         "provider": LLMProvider.GROQ,
         "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.7
+        "temperature": 0.5
     },
     "email_agent": {
         "provider": LLMProvider.GROQ,
@@ -35,6 +35,16 @@ DEFAULT_AGENTS_CONFIG = {
     "health_monitor": {
         "provider": LLMProvider.GROQ,
         "model_name": "arcee-ai/trinity-mini:free",
+        "temperature": 0.7
+    },
+    "general_agent": {
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
+        "temperature": 0.7
+    },
+    "analyzer": {
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
         "temperature": 0.7
     }
 }

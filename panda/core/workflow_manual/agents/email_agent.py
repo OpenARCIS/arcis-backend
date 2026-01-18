@@ -30,19 +30,31 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
     llm_client = LLMFactory.get_client_for_agent("email_agent")
     email_llm = llm_client.bind_tools(email_tools)
     
+    print(f"\n✉️ EMAIL AGENT: Executing - {current_step['description']}")
+
+    # Track conversation
     messages = email_prompt.format_messages(
         task_description=current_step["description"],
         context=str(state.get("context", {}))
     )
-    
 
-    print(f"\n✉️ EMAIL AGENT: Executing - {current_step['description']}")
-    email_response = await email_llm.ainvoke(messages)
+    tool_output = ""
+    max_iterations = 10
     
-    if email_response.tool_calls:
-        tool_map = {tool.name: tool for tool in email_tools}
+    for i in range(max_iterations):
+        # Invoke LLM
+        email_response = await email_llm.ainvoke(messages)
         
+        # If no tool calls, we are done
+        if not email_response.tool_calls:
+            tool_output = email_response.content
+            print("EMAIL AGENT(final) : ", tool_output)
+            break
+
+        tool_map = {tool.name: tool for tool in email_tools}
         tool_results = []
+        
+        print(f"   🔄 Iteration {i+1}: Processing {len(email_response.tool_calls)} tool calls")
         
         # Execute each tool call
         for tool_call in email_response.tool_calls:
@@ -80,20 +92,20 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
                 print(f"   ⚠️ Tool {tool_name} not found")
 
         tool_messages = [
-            ToolMessage(content=str(r['result']), tool_call_id=tc["id"])
+            ToolMessage(content=str(r.get('result', r.get('error'))), tool_call_id=tc["id"])
             for tc, r in zip(email_response.tool_calls, tool_results)
         ]
         
-        # Invoke LLM again with tool results
-        final_response = await email_llm.ainvoke(
-            messages + [email_response] + tool_messages
-        )
+        # Append to history
+        messages.append(email_response)
+        messages.extend(tool_messages)
 
+    # If loop finished but still no final answer (should be rare if agent follows instructions, but good safety)
+    if not tool_output and messages and isinstance(messages[-1], ToolMessage):
+         # One final call
+        final_response = await email_llm.ainvoke(messages)
         tool_output = final_response.content
-    else:
-        tool_output = email_response.content
-    
-    print(f"   Result: {tool_output}\n")
+        print("EMAIL AGENT(final after loop) : ", tool_output)
     
     return {
         **state,

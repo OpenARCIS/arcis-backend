@@ -2,7 +2,7 @@ import calendar
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from panda.database.mongo.connection import mongo
 from pydantic import BaseModel, Field
 
 # --- Data Models (Pydantic) ---
@@ -17,12 +17,16 @@ class CalendarItem(BaseModel):
 
 # --- Main Wrapper Class ---
 class CalendarWrapper:
-    def __init__(self, db: AsyncIOMotorDatabase, collection_name: str = "calendar_events"):
+    def __init__(self, collection_name: str = "calendar_events"):
         """
         Initialize with a Motor Database instance.
         """
-        self.collection = db[collection_name]
+        self.collection_name = collection_name
         self.cal = calendar.Calendar(firstweekday=6) # 6 = Sunday, 0 = Monday
+
+    @property
+    def collection(self):
+        return mongo.db[self.collection_name]
 
     # ---------------------------
     # Core CRUD Operations
@@ -147,3 +151,6 @@ class CalendarWrapper:
             structured_calendar.append(week_data)
 
         return structured_calendar
+
+
+calendar_wrapper = CalendarWrapper()

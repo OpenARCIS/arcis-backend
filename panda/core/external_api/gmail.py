@@ -72,6 +72,7 @@ class GmailAPI(GoogleAPI):
 
 
     async def get_n_mails(self, n: int):
+        email_list = []
         try:
             async with Aiogoogle(client_creds=self.client_creds, user_creds=self.user_cred) as aiogoogle:
                 gmail = await aiogoogle.discover('gmail', 'v1')
@@ -112,15 +113,18 @@ class GmailAPI(GoogleAPI):
                             "subject": subject,
                             "body": body
                         }
-                        print(email_obj)
+                        email_list.append(email_obj)
                         
                         #await mark_message_as_processed(msg_id)
                 
                 else:
                     print("No new mail.")
+            
+            return email_list
 
         except Exception as e:
             print(f"Error during polling: {e}")
+            return []
 
 
     async def search_email(self, query: str, max_results: int = 5):

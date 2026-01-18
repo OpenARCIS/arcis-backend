@@ -4,8 +4,10 @@ from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import GENERAL_AGENT_PROMPT
 
 from panda.core.workflow_manual.tools.web_search import web_search
+from panda.core.workflow_manual.tools.calendar import calendar_tools
 
-general_tools = [web_search]
+
+general_tools = [web_search] + calendar_tools 
 
 
 async def general_agent_node(state: AgentState) -> AgentState:
@@ -31,25 +33,31 @@ Execute this task and gather necessary information.""")
     llm_client = LLMFactory.get_client_for_agent("general_agent")
     general_llm = llm_client.bind_tools(general_tools)
     
+    print(f"\n🔧 GENERAL AGENT: Executing - {current_step['description']}")
+    
+    # Track the ongoing conversation
     messages = general_prompt.format_messages(
         task_description=current_step["description"],
         context=str(state.get("context", {}))
     )
     
-
-    print(f"\n🔧 GENERAL AGENT: Executing - {current_step['description']}")
-    
-    # Initial LLM call
-    response = await general_llm.ainvoke(messages)
-    
     tool_output = ""
+    max_iterations = 10
     
-    # Handle tool calls if any
-    if response.tool_calls:
-        # Create a map of available tools
-        tool_map = {tool.name: tool for tool in general_tools}
+    for i in range(max_iterations):
+        # Invoke LLM
+        response = await general_llm.ainvoke(messages)
         
+        # If no tool calls, we are done
+        if not response.tool_calls:
+            tool_output = response.content
+            break
+            
+        # If there are tool calls, execute them
+        tool_map = {tool.name: tool for tool in general_tools}
         tool_results = []
+        
+        print(f"   🔄 Iteration {i+1}: Processing {len(response.tool_calls)} tool calls")
         
         for tool_call in response.tool_calls:
             tool_name = tool_call["name"]
@@ -87,13 +95,15 @@ Execute this task and gather necessary information.""")
             for tc, r in zip(response.tool_calls, tool_results)
         ]
         
-        # Get final response with tool outputs
-        final_response = await general_llm.ainvoke(
-            messages + [response] + tool_messages
-        )
+        # Append the assistant's request and the tool outputs to the history
+        messages.append(response)
+        messages.extend(tool_messages)
+    
+    # If we exited the loop due to max iterations
+    if not tool_output and messages and isinstance(messages[-1], ToolMessage):
+         # One final call to get the answer based on the last tool outputs
+        final_response = await general_llm.ainvoke(messages)
         tool_output = final_response.content
-    else:
-        tool_output = response.content
 
     print(f"   Result: {tool_output}\n")
     
