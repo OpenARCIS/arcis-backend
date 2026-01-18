@@ -62,3 +62,27 @@ async def callback(request: Request):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Auth flow failed: {str(e)}")
+
+
+@gmail_router.get("/gmail/auth/status")
+async def auth_status():
+    """
+    Checks if the user is authenticated with Google.
+    """
+    user = await mongo.db[COLLECTIONS['users']].find_one({"username": "test_user"})
+    if user and "gmail_credentials" in user:
+        return True
+    return False
+
+
+@gmail_router.get("/gmail/auth/logout")
+async def logout():
+    """
+    Logs out the user by removing Gmail credentials from the database.
+    """
+    await mongo.db[COLLECTIONS['users']].update_one(
+        {"username": "test_user"},
+        {"$unset": {"gmail_credentials": "", "auth_updated_at": ""}}
+    )
+    return {"message": "Logged out successfully"}
+
