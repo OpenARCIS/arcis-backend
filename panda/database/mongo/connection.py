@@ -6,7 +6,8 @@ from panda import Config
 COLLECTIONS = {
     'users': 'users',
     'processed_emails': 'processed_emails',
-    'settings': 'settings'
+    'settings': 'settings',
+    'token_usage': 'token_usage'
 }
 
 class Database:

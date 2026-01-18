@@ -2,7 +2,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import BOOKING_AGENT_PROMPT
+from panda.core.llm.prompts import BOOKING_AGENT_PROMPT
 from panda.core.workflow_manual.tools.booking import booking_tools
+from panda.core.utils.token_tracker import save_token_usage
 
 
 async def booking_agent_node(state: AgentState) -> AgentState:
@@ -37,6 +39,12 @@ Execute this booking/travel task. Provide detailed results.""")
 
     # Initial LLM call
     response = await booking_llm.ainvoke(messages)
+    
+    # Save token usage
+    if hasattr(response, "usage_metadata") and response.usage_metadata:
+            await save_token_usage("booking_agent", response.usage_metadata)
+    elif hasattr(response, "response_metadata") and response.response_metadata.get("token_usage"):
+            await save_token_usage("booking_agent", response.response_metadata.get("token_usage"))
     
     tool_output = ""
     
@@ -88,6 +96,11 @@ Execute this booking/travel task. Provide detailed results.""")
         final_response = await booking_llm.ainvoke(
             messages + [response] + tool_messages
         )
+        
+        # Save token usage (final)
+        if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
+             await save_token_usage("booking_agent", final_response.usage_metadata)
+
         tool_output = final_response.content
     else:
         tool_output = response.content

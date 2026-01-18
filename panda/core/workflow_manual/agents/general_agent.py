@@ -2,6 +2,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import GENERAL_AGENT_PROMPT
+from panda.core.utils.token_tracker import save_token_usage
 
 from panda.core.workflow_manual.tools.web_search import web_search
 from panda.core.workflow_manual.tools.calendar import calendar_tools
@@ -47,6 +48,12 @@ Execute this task and gather necessary information.""")
     for i in range(max_iterations):
         # Invoke LLM
         response = await general_llm.ainvoke(messages)
+        
+        # Save token usage
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+             await save_token_usage("general_agent", response.usage_metadata)
+        elif hasattr(response, "response_metadata") and response.response_metadata.get("token_usage"):
+             await save_token_usage("general_agent", response.response_metadata.get("token_usage"))
         
         # If no tool calls, we are done
         if not response.tool_calls:
@@ -103,6 +110,11 @@ Execute this task and gather necessary information.""")
     if not tool_output and messages and isinstance(messages[-1], ToolMessage):
          # One final call to get the answer based on the last tool outputs
         final_response = await general_llm.ainvoke(messages)
+        
+        # Save token usage (final)
+        if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
+             await save_token_usage("general_agent", final_response.usage_metadata)
+
         tool_output = final_response.content
 
     print(f"   Result: {tool_output}\n")

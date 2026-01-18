@@ -3,6 +3,7 @@ from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.models.agents.response import PlanModel
 from panda.core.llm.prompts import AUTO_ANALYZER_PROMPT
+from panda.core.utils.token_tracker import save_token_usage
 
 
 async def analyzer_node(state: AgentState) -> AgentState:
@@ -22,11 +23,16 @@ async def analyzer_node(state: AgentState) -> AgentState:
     
     # Get generic LLM client (can use specific one if configured)
     llm = LLMFactory.get_client_for_agent("planner") # reusing planner config
-    structured_llm = llm.with_structured_output(PlanModel)
+    structured_llm = llm.with_structured_output(PlanModel, include_raw=True)
     chain = analyzer_prompt | structured_llm
     
     try:
-        plan_response: PlanModel = await chain.ainvoke({"input": email_content})
+        response = await chain.ainvoke({"input": email_content})
+        plan_response = response["parsed"]
+
+        # Save token usage
+        if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
+            await save_token_usage("analyzer", response["raw"].usage_metadata)
         
         if not plan_response.steps:
             print("   🚫 Msg ignored (Irrelevant/Spam)")

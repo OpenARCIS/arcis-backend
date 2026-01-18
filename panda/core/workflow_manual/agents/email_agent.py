@@ -5,6 +5,7 @@ from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import EMAIL_AGENT_PROMPT
 from panda.core.workflow_manual.tools.email import email_tools
+from panda.core.utils.token_tracker import save_token_usage
 
 
 async def email_agent_node(state: AgentState) -> AgentState:
@@ -44,6 +45,12 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
     for i in range(max_iterations):
         # Invoke LLM
         email_response = await email_llm.ainvoke(messages)
+        
+        # Save token usage
+        if hasattr(email_response, "usage_metadata") and email_response.usage_metadata:
+             await save_token_usage("email_agent", email_response.usage_metadata)
+        elif hasattr(email_response, "response_metadata") and email_response.response_metadata.get("token_usage"):
+             await save_token_usage("email_agent", email_response.response_metadata.get("token_usage"))
         
         # If no tool calls, we are done
         if not email_response.tool_calls:
@@ -104,6 +111,11 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
     if not tool_output and messages and isinstance(messages[-1], ToolMessage):
          # One final call
         final_response = await email_llm.ainvoke(messages)
+        
+        # Save token usage (final)
+        if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
+             await save_token_usage("email_agent", final_response.usage_metadata)
+
         tool_output = final_response.content
         print("EMAIL AGENT(final after loop) : ", tool_output)
     

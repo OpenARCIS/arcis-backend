@@ -4,6 +4,7 @@ from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.models.agents.response import ReplannerResponse
 from panda.core.llm.prompts import REPLANNER_PROMPT
+from panda.core.utils.token_tracker import save_token_usage
 
 
 async def replanner_node(state: AgentState) -> AgentState:
@@ -33,7 +34,7 @@ Evaluate the execution and determine next actions.""")
     ])
     
     llm_client = LLMFactory.get_client_for_agent("replanner")
-    replanner_llm = llm_client.with_structured_output(ReplannerResponse)
+    replanner_llm = llm_client.with_structured_output(ReplannerResponse, include_raw=True)
     
     messages = replanner_prompt.format_messages(
         current_step=str(current_step) if current_step else "None",
@@ -42,6 +43,12 @@ Evaluate the execution and determine next actions.""")
     )
     
     response = await replanner_llm.ainvoke(messages)
+    
+    # Save token usage
+    if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
+        await save_token_usage("replanner", response["raw"].usage_metadata)
+    
+    response = response["parsed"]
     
     # Update plan
     updated_plan = state["plan"].copy()

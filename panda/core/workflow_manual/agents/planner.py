@@ -5,6 +5,7 @@ from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState, PlanStep
 from panda.models.agents.response import PlanModel
 from panda.core.llm.prompts import PLANNER_PROMPT
+from panda.core.utils.token_tracker import save_token_usage
 
 
 async def planner_node(state: AgentState) -> AgentState:
@@ -15,10 +16,16 @@ async def planner_node(state: AgentState) -> AgentState:
     
     
     llm_client = LLMFactory.get_client_for_agent("planner")
-    planner_llm = llm_client.with_structured_output(PlanModel)
+    planner_llm = llm_client.with_structured_output(PlanModel, include_raw=True)
 
     messages = planner_prompt.format_messages(input=state["input"])
-    plan_response = await planner_llm.ainvoke(messages)
+    response = await planner_llm.ainvoke(messages)
+    
+    plan_response = response["parsed"]
+    
+    # Save token usage
+    if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
+        await save_token_usage("planner", response["raw"].usage_metadata)
     
     plan_steps: List[PlanStep] = [
         {

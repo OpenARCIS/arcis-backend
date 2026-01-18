@@ -4,6 +4,7 @@ from panda.core.llm.factory import LLMFactory
 from panda.core.llm.prompts import SUPERVISOR_PROMPT
 from panda.models.agents.state import AgentState
 from panda.models.agents.response import SupervisorRouterResponse
+from panda.core.utils.token_tracker import save_token_usage
 
 
 async def supervisor_node(state: AgentState) -> AgentState:
@@ -35,7 +36,7 @@ Determine the next node to route to.""")
     ])
 
     llm_client = LLMFactory.get_client_for_agent("supervisor")
-    supervisor_llm = llm_client.with_structured_output(SupervisorRouterResponse)
+    supervisor_llm = llm_client.with_structured_output(SupervisorRouterResponse, include_raw=True)
     
     messages = supervisor_prompt.format_messages(
         plan_summary=plan_summary,
@@ -44,7 +45,12 @@ Determine the next node to route to.""")
         step_agent=current_step["assigned_agent"]
     )
     
-    routing_response = await supervisor_llm.ainvoke(messages)
+    response = await supervisor_llm.ainvoke(messages)
+    routing_response = response["parsed"]
+
+    # Save token usage
+    if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
+        await save_token_usage("supervisor", response["raw"].usage_metadata)
     
     print(f"\n🎯 SUPERVISOR: Routing to {routing_response.next_node}")
     print(f"   Reason: {routing_response.reasoning}\n")
