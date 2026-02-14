@@ -12,6 +12,7 @@ class LLMProvider(Enum):
     MISTRAL_AI = "mistral"
     CEREBRAS = "cerebras"
     GROQ = "groq"
+    
 
 class BaseLLMClient(ABC):
     def __init__(self, model_name: str, temperature: float = 0.7):

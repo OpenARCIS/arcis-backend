@@ -43,7 +43,7 @@ Execute this task and gather necessary information.""")
     )
     
     tool_output = ""
-    max_iterations = 10
+    max_iterations = 5
     
     for i in range(max_iterations):
         # Invoke LLM
