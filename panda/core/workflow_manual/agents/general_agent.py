@@ -136,7 +136,13 @@ Execute this task and gather necessary information.""")
 
     print(f"   Result: {tool_output}\n")
     
+    # Accumulate output into shared context so other agents can see it
+    updated_context = dict(state.get("context", {}))
+    step_key = current_step["description"]
+    updated_context[step_key] = tool_output
+
     return {
         **state,
-        "last_tool_output": tool_output
+        "last_tool_output": tool_output,
+        "context": updated_context
     }

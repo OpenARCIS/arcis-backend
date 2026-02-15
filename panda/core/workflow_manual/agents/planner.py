@@ -68,7 +68,7 @@ Generate a detailed execution plan.""")
             **state,
             "plan": [],
             "current_step_index": 0,
-            "context": {},
+            "context": state.get("context", {}),
             "final_response": plan_response.direct_response or "",
             "workflow_status": "FINISHED"
         }
@@ -93,5 +93,5 @@ Generate a detailed execution plan.""")
         **state,
         "plan": plan_steps,
         "current_step_index": 0,
-        "context": {}
+        "context": state.get("context", {})
     }
