@@ -4,7 +4,6 @@ from typing import Optional, Dict, Any, List
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from panda.core.workflow_manual.manual_flow import run_workflow
-from panda.core.llm.short_memory import get_all_threads, get_thread_history
 
 manual_flow_router = APIRouter()
 
@@ -15,7 +14,7 @@ class ChatRequest(BaseModel):
 class MessageSchema(BaseModel):
     type: str = Field(..., description="Type of message: 'human', 'ai', 'tool'")
     response: str = Field(..., description="The actual text content")
-    plan: Optional[List[str]] = None
+    plan: Optional[List[Dict[str, Any]]] = None
     thread_id: str
 
 class ThreadPreviewSchema(BaseModel):
@@ -47,15 +46,3 @@ async def chat_manual(request: ChatRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
-@manual_flow_router.get("/manual_flow/all_chats", response_model=List[ThreadPreviewSchema])
-async def get_chats():
-    data = get_all_threads()
-    return data
-
-
-@manual_flow_router.get("/manual_flow/chat/{thread_id}", response_model=List[MessageSchema])
-async def get_chat_history_endpoint(thread_id: str):
-    return get_thread_history(thread_id)
