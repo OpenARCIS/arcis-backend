@@ -1,4 +1,6 @@
 from langgraph.graph import StateGraph, END
+from langgraph.types import Command
+from langgraph.errors import GraphInterrupt
 
 from panda.models.agents.state import AgentState
 
@@ -64,14 +66,32 @@ async def run_workflow(user_input: str, thread_id: str | None):
 
     current_state = await app.aget_state(config)
 
+    # Check if graph is paused (resuming from an interrupt)
+    if current_state.next:
+        print(f"▶️ Resuming workflow for thread {thread_id} with: {user_input}")
+        try:
+            final_state = await app.ainvoke(
+                Command(resume=user_input),
+                config
+            )
+        except GraphInterrupt as e:
+            # Another interrupt in the same run
+            return {
+                "type": "interrupt",
+                "response": str(e.interrupts[0].value),
+                "thread_id": thread_id,
+            }
+        return final_state
+
+    # Fresh invocation
     if not current_state.values:
         payload = {
             "input": user_input,
             "plan": [],
             "current_step_index": 0,
             "context": {},
-            "last_tool_output": "", #TODO remove these values by using baseclass in the data model.
-            "final_response": "",   # also check if these data are accessed properly using .get()
+            "last_tool_output": "",
+            "final_response": "",
             "thread_id": thread_id
         }
     else:
@@ -82,10 +102,18 @@ async def run_workflow(user_input: str, thread_id: str | None):
 
     print(f"📝 User Request: {user_input}")
     
-    final_state = await app.ainvoke(
-        payload,
-        {"configurable": {"thread_id": thread_id}}
-    )
+    try:
+        final_state = await app.ainvoke(
+            payload,
+            config
+        )
+    except GraphInterrupt as e:
+        # Graph paused — agent needs user input
+        return {
+            "type": "interrupt",
+            "response": str(e.interrupts[0].value),
+            "thread_id": thread_id,
+        }
     
     print(final_state)
     

@@ -1,4 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage
+from langgraph.types import interrupt
+
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import GENERAL_AGENT_PROMPT
@@ -55,6 +58,20 @@ Execute this task and gather necessary information.""")
         elif hasattr(response, "response_metadata") and response.response_metadata.get("token_usage"):
              await save_token_usage("general_agent", response.response_metadata.get("token_usage"))
         
+        # Check if agent needs user input
+        if response.content and "[NEED_INPUT]" in response.content:
+            question = response.content.replace("[NEED_INPUT]", "").strip()
+            print(f"   ❓ GENERAL AGENT needs user input: {question}")
+            user_answer = interrupt(question)
+
+            print(f"   ✅ User provided: {user_answer}")
+            messages.append(response)
+            messages.append(HumanMessage(content=f"User provided: {user_answer}"))
+            response = await general_llm.ainvoke(messages)
+
+            if hasattr(response, "usage_metadata") and response.usage_metadata:
+                await save_token_usage("general_agent", response.usage_metadata)
+
         # If no tool calls, we are done
         if not response.tool_calls:
             tool_output = response.content
