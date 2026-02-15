@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional, Dict, Any, List
 
 from fastapi import APIRouter, HTTPException
@@ -33,7 +34,11 @@ async def chat_manual(request: ChatRequest):
     Trigger the manual workflow with a user message.
     """
     try:
-        final_state = await run_workflow(request.message, request.thread_id)
+        thread_id = request.thread_id
+        if not thread_id:
+            thread_id = str(uuid.uuid4())
+
+        final_state = await run_workflow(request.message, thread_id)
         return {
             "type": "ai",
             "response": final_state.get("final_response"),
