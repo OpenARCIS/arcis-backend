@@ -37,7 +37,17 @@ def get_all_threads():
             "updated_at": 1,
             # Extract the very last message from the array for the preview text
             "last_message": { 
-                "$arrayElemAt": ["$latest_checkpoint.channel_values.messages", -1] 
+                "$let": {
+                    "vars": {
+                        "last_msg": { "$arrayElemAt": ["$latest_checkpoint.channel_values.messages", -1] }
+                    },
+                    "in": {
+                        "type": "$$last_msg.type",
+                        "response": "$$last_msg.content",
+                        "plan": [],
+                        "thread_id": "$_id"
+                    }
+                }
             }
         }}
     ]
@@ -63,9 +73,17 @@ def get_thread_history(thread_id: str):
     )
     
     if latest_checkpoint:
-
         try:
-            return latest_checkpoint['checkpoint']['channel_values']['messages']
+            raw_messages = latest_checkpoint['checkpoint']['channel_values']['messages']
+            formatted_messages = []
+            for msg in raw_messages:
+                formatted_messages.append({
+                    "type": msg['type'],
+                    "response": msg['content'],
+                    "plan": msg.get('additional_kwargs', {}).get('plan', []),
+                    "thread_id": thread_id
+                })
+            return formatted_messages
         except KeyError:
             return []
             

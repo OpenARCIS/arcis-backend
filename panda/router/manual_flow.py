@@ -49,3 +49,8 @@ async def chat_manual(request: ChatRequest):
 async def get_chats():
     data = get_all_threads()
     return data
+
+
+@manual_flow_router.get("/manual_flow/chat/{thread_id}", response_model=List[MessageSchema])
+async def get_chat_history_endpoint(thread_id: str):
+    return get_thread_history(thread_id)
