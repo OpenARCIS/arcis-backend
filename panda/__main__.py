@@ -11,6 +11,7 @@ from panda.router.settings import settings_router
 from panda.router.calendar import calendar_router
 from panda.router.chat import chat_router
 from panda.router.auto_flow import auto_flow_router
+from panda.router.auto_flow import auto_flow_router
 from panda.router.user_status import user_status_router
 from panda.router.token_tracker import token_tracker_router
 from .database.mongo.connection import mongo
