@@ -1,6 +1,7 @@
 from langgraph.graph import StateGraph, END
 
 from panda.models.agents.state import AgentState
+
 from panda.core.workflow_manual.agents.planner import planner_node
 from panda.core.workflow_manual.agents.supervisor import supervisor_node, supervisor_router
 from panda.core.workflow_manual.agents.email_agent import email_agent_node
@@ -13,7 +14,6 @@ def create_workflow() -> StateGraph:
 
     workflow = StateGraph(AgentState)
     
-    # Add nodes
     workflow.add_node("planner", planner_node)
     workflow.add_node("supervisor", supervisor_node)
     workflow.add_node("email_agent", email_agent_node)
@@ -21,11 +21,11 @@ def create_workflow() -> StateGraph:
     workflow.add_node("general_agent", general_agent_node)
     workflow.add_node("replanner", replanner_node)
     
-    # Define edges
+    # planner to supervisor
     workflow.set_entry_point("planner")
     workflow.add_edge("planner", "supervisor")
     
-    # Conditional routing from supervisor
+    # supervisor has edges to other agents
     workflow.add_conditional_edges(
         "supervisor",
         supervisor_router,
@@ -37,12 +37,12 @@ def create_workflow() -> StateGraph:
         }
     )
     
-    # All workers route to replanner
+    # all agents have a single edge to replanner
     workflow.add_edge("email_agent", "replanner")
     workflow.add_edge("booking_agent", "replanner")
     workflow.add_edge("general_agent", "replanner")
     
-    # Conditional routing from replanner
+    # replanner either ends or continues to supervisor
     workflow.add_conditional_edges(
         "replanner",
         replanner_router,
@@ -56,13 +56,9 @@ def create_workflow() -> StateGraph:
 
 
 async def run_workflow(user_input: str):
-    """Execute the workflow with a user request."""
-    
-    # Create and compile workflow
     workflow = create_workflow()
     app = workflow.compile()
     
-    # Initialize state
     initial_state: AgentState = {
         "input": user_input,
         "plan": [],
@@ -72,22 +68,10 @@ async def run_workflow(user_input: str):
         "current_step_index": 0
     }
     
-    print("\n" + "="*80)
-    print(f"🚀 STARTING WORKFLOW")
     print(f"📝 User Request: {user_input}")
-    print("="*80)
     
-    # Execute workflow
     final_state = await app.ainvoke(initial_state)
     
-    print("\n" + "="*80)
-    print("✅ WORKFLOW COMPLETED")
-    print(f"📊 Plan Execution Summary:")
-    for step in final_state["plan"]:
-        status_emoji = {"completed": "✅", "failed": "❌", "pending": "⏳"}
-        emoji = status_emoji.get(step["status"], "❓")
-        print(f"  {emoji} Step {step['id']}: {step['description']} [{step['status']}]")
-    print(f"\n💬 Final Response: {final_state.get('final_response', 'No response generated')}")
-    print("="*80 + "\n")
+    print(final_state)
     
     return final_state
