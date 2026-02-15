@@ -12,6 +12,7 @@ from panda.core.workflow_manual.agents.general_agent import general_agent_node
 from panda.core.workflow_manual.agents.replanner import replanner_node, replanner_router
 
 from panda.core.llm.short_memory import checkpointer # mongodb per thread memory
+from panda.core.llm import memory_extractor
 
 
 def create_workflow() -> StateGraph:
@@ -25,11 +26,9 @@ def create_workflow() -> StateGraph:
     workflow.add_node("general_agent", general_agent_node)
     workflow.add_node("replanner", replanner_node)
     
-    # planner to supervisor
     workflow.set_entry_point("planner")
     workflow.add_edge("planner", "supervisor")
     
-    # supervisor has edges to other agents
     workflow.add_conditional_edges(
         "supervisor",
         supervisor_router,
@@ -41,12 +40,10 @@ def create_workflow() -> StateGraph:
         }
     )
     
-    # all agents have a single edge to replanner
     workflow.add_edge("email_agent", "replanner")
     workflow.add_edge("booking_agent", "replanner")
     workflow.add_edge("general_agent", "replanner")
     
-    # replanner either ends or continues to supervisor
     workflow.add_conditional_edges(
         "replanner",
         replanner_router,
@@ -60,7 +57,8 @@ def create_workflow() -> StateGraph:
 
 
 async def run_workflow(user_input: str, thread_id: str | None):
-    workflow = create_workflow()
+    workflow = create_workflow() # TODO one time instantiate workflow
+
     app = workflow.compile(checkpointer=checkpointer)
     config = {"configurable": {"thread_id": thread_id}}
 
@@ -68,7 +66,7 @@ async def run_workflow(user_input: str, thread_id: str | None):
 
     # Check if graph is paused (resuming from an interrupt)
     if current_state.next:
-        print(f"▶️ Resuming workflow for thread {thread_id} with: {user_input}")
+        print(f"Resuming workflow for thread {thread_id} with: {user_input}")
         await app.ainvoke(
             Command(resume=user_input),
             config
@@ -87,13 +85,14 @@ async def run_workflow(user_input: str, thread_id: str | None):
                 "thread_id": thread_id
             }
         else:
+            # continuing conversation from chat history (not interupt but same chat)
             payload = {
                 "input": user_input,
                 "messages": [HumanMessage(content=user_input)],
                 "thread_id": thread_id
             }
 
-        print(f"📝 User Request: {user_input}")
+        print(f"User Request: {user_input}")
         
         await app.ainvoke(
             payload,
@@ -107,7 +106,7 @@ async def run_workflow(user_input: str, thread_id: str | None):
         for task in state_after.tasks:
             if hasattr(task, 'interrupts') and task.interrupts:
                 question = task.interrupts[0].value
-                print(f"⏸️ Graph interrupted: {question}")
+                print(f"Graph interrupted: {question}")
                 return {
                     "type": "interrupt",
                     "response": str(question),
@@ -130,5 +129,13 @@ async def run_workflow(user_input: str, thread_id: str | None):
             config,
             {"messages": [AIMessage(content=final_resp)]}
         )
+
+    # Extract key details from conversation and save to long-term memory
+    try:
+        conv_messages = final_state.get("messages", [])
+        if conv_messages:
+            await memory_extractor.extract_and_store(conv_messages, source="manual_chat")
+    except Exception as e:
+        print(f"Memory extraction skipped: {e}")
     
     return final_state

@@ -21,3 +21,18 @@ def clean_urls(text: str) -> str:
         text = text.replace(url, replacement)
 
     return text
+
+
+def format_messages(messages: list) -> str:
+    """Convert LangChain messages into a readable conversation string."""
+    lines = []
+    for msg in messages:
+        role = getattr(msg, "type", "unknown")
+        content = getattr(msg, "content", str(msg))
+        if role == "human":
+            lines.append(f"User: {content}")
+        elif role == "ai":
+            lines.append(f"Assistant: {content}")
+        elif role == "tool":
+            lines.append(f"[Tool Output]: {content[:200]}")
+    return "\n".join(lines)

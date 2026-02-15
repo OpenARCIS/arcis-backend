@@ -5,7 +5,9 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
-from .router.routes import router
+from panda import Config
+
+from panda.router.routes import router
 from panda.router.gmail import gmail_router
 from panda.router.settings import settings_router
 from panda.router.calendar import calendar_router
@@ -14,10 +16,16 @@ from panda.router.auto_flow import auto_flow_router
 from panda.router.auto_flow import auto_flow_router
 from panda.router.user_status import user_status_router
 from panda.router.token_tracker import token_tracker_router
-from .database.mongo.connection import mongo
+from panda.router.onboarding import onboarding_router
+
+from panda.database.mongo.connection import mongo
+
 from panda.core.llm.config_manager import config_manager
+from panda.core.llm.long_memory import long_memory
+
 from panda.core.external_api.gmail import gmail_api
 from panda.core.workflow_auto.auto_flow import run_autonomous_processing
+
 
 async def some_cron_jobs():
     try:
@@ -30,6 +38,11 @@ async def lifespan(app: FastAPI):
     await mongo.connect()
     await config_manager.load_config()
     await gmail_api.load_creds()
+
+    try:
+        long_memory.init(mode=Config.EMBEDDING_MODE)
+    except Exception as e:
+        print(f"\u26a0\ufe0f Long-term memory init failed (non-fatal): {e}")
     
     cron_task = asyncio.create_task(some_cron_jobs())
 
@@ -64,6 +77,7 @@ api_server.include_router(chat_router)
 api_server.include_router(auto_flow_router)
 api_server.include_router(user_status_router)
 api_server.include_router(token_tracker_router)
+api_server.include_router(onboarding_router)
 
 
 if __name__ == '__main__':
