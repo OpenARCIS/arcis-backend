@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     
     cron_task = asyncio.create_task(some_cron_jobs())
 
-    asyncio.create_task(run_autonomous_processing())
+    #asyncio.create_task(run_autonomous_processing())
     
     yield
     

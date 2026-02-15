@@ -9,6 +9,7 @@ class PlanStep(TypedDict):
 
 
 class AgentState(TypedDict):
+    thread_id: Optional[str]
     input: str  # Original user request
     plan: List[PlanStep]  # Breakdown of tasks
     context: Dict[str, Any]  # Accumulated context

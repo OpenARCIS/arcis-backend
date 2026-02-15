@@ -9,6 +9,8 @@ from panda.core.workflow_manual.agents.booking_agent import booking_agent_node
 from panda.core.workflow_manual.agents.general_agent import general_agent_node
 from panda.core.workflow_manual.agents.replanner import replanner_node, replanner_router
 
+from panda.core.llm.short_memory import checkpointer #mongodb per thread memory
+
 
 def create_workflow() -> StateGraph:
 
@@ -55,22 +57,35 @@ def create_workflow() -> StateGraph:
     return workflow
 
 
-async def run_workflow(user_input: str):
+async def run_workflow(user_input: str, thread_id: str | None):
     workflow = create_workflow()
-    app = workflow.compile()
-    
-    initial_state: AgentState = {
-        "input": user_input,
-        "plan": [],
-        "context": {},
-        "last_tool_output": "",
-        "final_response": "",
-        "current_step_index": 0
-    }
-    
+    app = workflow.compile(checkpointer=checkpointer)
+    config = {"configurable": {"thread_id": thread_id}}
+
+    current_state = await app.aget_state(config)
+
+    if not current_state.values:
+        payload = {
+            "input": user_input,
+            "plan": [],
+            "current_step_index": 0,
+            "context": {},
+            "last_tool_output": "", #TODO remove these values by using baseclass in the data model.
+            "final_response": "",   # also check if these data are accessed properly using .get()
+            "thread_id": thread_id
+        }
+    else:
+        payload = {
+            "input": user_input,
+            "thread_id": thread_id
+        }
+
     print(f"📝 User Request: {user_input}")
     
-    final_state = await app.ainvoke(initial_state)
+    final_state = await app.ainvoke(
+        payload,
+        {"configurable": {"thread_id": thread_id}}
+    )
     
     print(final_state)
     
