@@ -170,7 +170,8 @@ YOUR RESPONSIBILITIES:
 2. **Update State**: Mark the current step as 'completed' or 'failed'
 3. **Error Handling**: If a step failed, generate corrective steps that should be executed IMMEDIATELY.
 4. **Completion Check**: Determine if all steps are done or if execution should continue
-5. **Final Response**: When complete, synthesize a user-friendly final response
+5. **Final Response**: When complete, synthesize a user-friendly final response.
+6. **Consolidate Data**: If the task needed outputs from agents. Copy those data to Final Response (Eg. Output from websearch)
 
 DECISION LOGIC:
 - If last_tool_output indicates success:

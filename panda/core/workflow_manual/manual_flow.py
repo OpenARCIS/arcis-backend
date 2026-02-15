@@ -97,7 +97,8 @@ async def run_workflow(user_input: str, thread_id: str | None):
             payload = {
                 "input": user_input,
                 "messages": [HumanMessage(content=user_input)],
-                "thread_id": thread_id
+                "thread_id": thread_id,
+                "workflow_status": None # for every calls force set not finished (bcz history may set it as finished)
             }
 
         print(f"📝 User Request: {user_input}")
