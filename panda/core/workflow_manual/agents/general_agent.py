@@ -46,9 +46,22 @@ Execute this task and gather necessary information.""")
     )
     
     tool_output = ""
-    max_iterations = 5
+    max_iterations = 3
     
     for i in range(max_iterations):
+        # On the last iteration, tell the LLM to stop using tools and produce a final answer
+        if i == max_iterations - 1:
+            messages.append(HumanMessage(
+                content="You have reached the maximum number of tool iterations. "
+                        "Do NOT call any more tools. Synthesize a final answer from the information you have gathered so far."
+            ))
+            print(f"   ⚠️ GENERAL AGENT: Reached max iterations ({max_iterations}), forcing final answer")
+            final_response = await llm_client.ainvoke(messages)
+            if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
+                await save_token_usage("general_agent", final_response.usage_metadata)
+            tool_output = final_response.content
+            break
+
         # Invoke LLM
         response = await general_llm.ainvoke(messages)
         
@@ -136,7 +149,13 @@ Execute this task and gather necessary information.""")
 
     print(f"   Result: {tool_output}\n")
     
+    # Accumulate output into shared context so other agents can see it
+    updated_context = dict(state.get("context", {}))
+    step_key = current_step["description"]
+    updated_context[step_key] = tool_output
+
     return {
         **state,
-        "last_tool_output": tool_output
+        "last_tool_output": tool_output,
+        "context": updated_context
     }

@@ -25,9 +25,16 @@ def create_workflow() -> StateGraph:
     workflow.add_node("general_agent", general_agent_node)
     workflow.add_node("replanner", replanner_node)
     
-    # planner to supervisor
+    # planner routes to supervisor OR directly to END for simple messages
     workflow.set_entry_point("planner")
-    workflow.add_edge("planner", "supervisor")
+    workflow.add_conditional_edges(
+        "planner",
+        lambda state: "end" if state.get("workflow_status") == "FINISHED" else "supervisor",
+        {
+            "end": END,
+            "supervisor": "supervisor"
+        }
+    )
     
     # supervisor has edges to other agents
     workflow.add_conditional_edges(
@@ -90,7 +97,8 @@ async def run_workflow(user_input: str, thread_id: str | None):
             payload = {
                 "input": user_input,
                 "messages": [HumanMessage(content=user_input)],
-                "thread_id": thread_id
+                "thread_id": thread_id,
+                "workflow_status": None # for every calls force set not finished (bcz history may set it as finished)
             }
 
         print(f"📝 User Request: {user_input}")

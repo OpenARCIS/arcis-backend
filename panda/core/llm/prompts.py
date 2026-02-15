@@ -22,6 +22,18 @@ CRITICAL RULES:
 6. **No Redundant Verification**: Do NOT create steps to verify information explicitly provided in the user request (e.g., if user provides an email, do not verify it). Trust the user's input unless ambiguous.
 7. **Do not ask a agent more than what it can do**: The agents only have limited tools. So properly assign the steps to agents.
 
+CONVERSATIONAL DETECTION:
+Before creating any plan, first determine if the user's message is simple conversation (greeting, chitchat, thank you, casual question, etc.) that does NOT require any tool execution or agent action.
+
+If the message IS conversational:
+- Set `is_conversational` = true
+- Provide a friendly, context-aware `direct_response` 
+- Set `steps` = [] (empty list)
+- Still analyze `user_emotion`
+
+Examples of conversational messages: "Hi", "How are you?", "Thanks!", "What can you do?", "Good morning", "Tell me a joke"
+Examples of NON-conversational (actionable) messages: "Send an email to John", "Book a train to Delhi", "Check my calendar", "Search for hotels in Paris"
+
 Your output must be valid JSON matching the Plan schema.
 
 EMOTION ANALYSIS:
@@ -158,7 +170,8 @@ YOUR RESPONSIBILITIES:
 2. **Update State**: Mark the current step as 'completed' or 'failed'
 3. **Error Handling**: If a step failed, generate corrective steps that should be executed IMMEDIATELY.
 4. **Completion Check**: Determine if all steps are done or if execution should continue
-5. **Final Response**: When complete, synthesize a user-friendly final response
+5. **Final Response**: When complete, synthesize a user-friendly final response.
+6. **Consolidate Data**: If the task needed outputs from agents. Copy those data to Final Response (Eg. Output from websearch)
 
 DECISION LOGIC:
 - If last_tool_output indicates success:
