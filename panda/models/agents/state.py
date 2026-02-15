@@ -1,4 +1,6 @@
-from typing import TypedDict, List, Dict, Any, Literal, Optional
+from typing import TypedDict, List, Dict, Any, Literal, Optional, Annotated
+
+from langgraph.graph import add_messages
 
 
 class PlanStep(TypedDict):
@@ -9,8 +11,10 @@ class PlanStep(TypedDict):
 
 
 class AgentState(TypedDict):
+    thread_id: Optional[str]
     input: str  # Original user request
     plan: List[PlanStep]  # Breakdown of tasks
+    messages: Annotated[list, add_messages]  # Conversation history (auto-accumulated)
     context: Dict[str, Any]  # Accumulated context
     last_tool_output: str  # Output from last worker
     final_response: str  # Final answer for user

@@ -1,7 +1,9 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage
+from langgraph.types import interrupt
+
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
-from panda.core.llm.prompts import BOOKING_AGENT_PROMPT
 from panda.core.llm.prompts import BOOKING_AGENT_PROMPT
 from panda.core.workflow_manual.tools.booking import booking_tools
 from panda.core.utils.token_tracker import save_token_usage
@@ -45,6 +47,21 @@ Execute this booking/travel task. Provide detailed results.""")
             await save_token_usage("booking_agent", response.usage_metadata)
     elif hasattr(response, "response_metadata") and response.response_metadata.get("token_usage"):
             await save_token_usage("booking_agent", response.response_metadata.get("token_usage"))
+
+    # Check if agent needs user input
+    if response.content and "[NEED_INPUT]" in response.content:
+        question = response.content.replace("[NEED_INPUT]", "").strip()
+        print(f"   ❓ BOOKING AGENT needs user input: {question}")
+        user_answer = interrupt(question)  # Graph PAUSES here
+
+        # Graph RESUMES here when user replies
+        print(f"   ✅ User provided: {user_answer}")
+        messages.append(response)
+        messages.append(HumanMessage(content=f"User provided: {user_answer}"))
+        response = await booking_llm.ainvoke(messages)
+
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            await save_token_usage("booking_agent", response.usage_metadata)
     
     tool_output = ""
     

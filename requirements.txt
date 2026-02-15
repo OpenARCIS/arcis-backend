@@ -14,3 +14,4 @@ langchain-openai
 langchain-mistralai
 beautifulsoup4
 ddgs
+langgraph-checkpoint-mongodb

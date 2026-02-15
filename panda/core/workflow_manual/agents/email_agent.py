@@ -1,5 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import ToolMessage, HumanMessage
+from langgraph.types import interrupt
 
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
@@ -52,6 +53,20 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
         elif hasattr(email_response, "response_metadata") and email_response.response_metadata.get("token_usage"):
              await save_token_usage("email_agent", email_response.response_metadata.get("token_usage"))
         
+        # Check if agent needs user input
+        if email_response.content and "[NEED_INPUT]" in email_response.content:
+            question = email_response.content.replace("[NEED_INPUT]", "").strip()
+            print(f"   ❓ EMAIL AGENT needs user input: {question}")
+            user_answer = interrupt(question)
+
+            print(f"   ✅ User provided: {user_answer}")
+            messages.append(email_response)
+            messages.append(HumanMessage(content=f"User provided: {user_answer}"))
+            email_response = await email_llm.ainvoke(messages)
+
+            if hasattr(email_response, "usage_metadata") and email_response.usage_metadata:
+                await save_token_usage("email_agent", email_response.usage_metadata)
+
         # If no tool calls, we are done
         if not email_response.tool_calls:
             tool_output = email_response.content
