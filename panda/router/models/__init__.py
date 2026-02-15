@@ -3,5 +3,4 @@ from .common import (
     UserLogin,
     Token,
     UserProfileResponse,
-    ChatMessage
 )

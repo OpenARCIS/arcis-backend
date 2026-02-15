@@ -9,7 +9,7 @@ from .router.routes import router
 from panda.router.gmail import gmail_router
 from panda.router.settings import settings_router
 from panda.router.calendar import calendar_router
-from panda.router.manual_flow import manual_flow_router
+from panda.router.chat import chat_router
 from panda.router.user_status import user_status_router
 from panda.router.token_tracker import token_tracker_router
 from .database.mongo.connection import mongo
@@ -58,7 +58,7 @@ api_server.include_router(router)
 api_server.include_router(gmail_router)
 api_server.include_router(settings_router)
 api_server.include_router(calendar_router)
-api_server.include_router(manual_flow_router)
+api_server.include_router(chat_router)
 api_server.include_router(user_status_router)
 api_server.include_router(token_tracker_router)
 
