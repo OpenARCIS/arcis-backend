@@ -69,52 +69,57 @@ async def run_workflow(user_input: str, thread_id: str | None):
     # Check if graph is paused (resuming from an interrupt)
     if current_state.next:
         print(f"▶️ Resuming workflow for thread {thread_id} with: {user_input}")
-        try:
-            final_state = await app.ainvoke(
-                Command(resume=user_input),
-                config
-            )
-        except GraphInterrupt as e:
-            # Another interrupt in the same run
-            return {
-                "type": "interrupt",
-                "response": str(e.interrupts[0].value),
-                "thread_id": thread_id,
-            }
-        return final_state
-
-    # Fresh invocation
-    if not current_state.values:
-        payload = {
-            "input": user_input,
-            "plan": [],
-            "current_step_index": 0,
-            "context": {},
-            "last_tool_output": "",
-            "final_response": "",
-            "thread_id": thread_id
-        }
+        await app.ainvoke(
+            Command(resume=user_input),
+            config
+        )
     else:
-        payload = {
-            "input": user_input,
-            "thread_id": thread_id
-        }
+        # Fresh invocation
+        if not current_state.values:
+            payload = {
+                "input": user_input,
+                "plan": [],
+                "current_step_index": 0,
+                "context": {},
+                "last_tool_output": "",
+                "final_response": "",
+                "thread_id": thread_id
+            }
+        else:
+            payload = {
+                "input": user_input,
+                "thread_id": thread_id
+            }
 
-    print(f"📝 User Request: {user_input}")
-    
-    try:
-        final_state = await app.ainvoke(
+        print(f"📝 User Request: {user_input}")
+        
+        await app.ainvoke(
             payload,
             config
         )
-    except GraphInterrupt as e:
-        # Graph paused — agent needs user input
+
+    # Check state AFTER invocation to see if graph paused at an interrupt
+    state_after = await app.aget_state(config)
+
+    if state_after.next:
+        for task in state_after.tasks:
+            if hasattr(task, 'interrupts') and task.interrupts:
+                question = task.interrupts[0].value
+                print(f"⏸️ Graph interrupted: {question}")
+                return {
+                    "type": "interrupt",
+                    "response": str(question),
+                    "thread_id": thread_id,
+                }
+        # Fallback if we can't extract the interrupt value
         return {
             "type": "interrupt",
-            "response": str(e.interrupts[0].value),
+            "response": "I need more information to continue.",
             "thread_id": thread_id,
         }
-    
+
+    final_state = state_after.values
     print(final_state)
     
     return final_state
+
