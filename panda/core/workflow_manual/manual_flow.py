@@ -1,5 +1,6 @@
 from langgraph.graph import StateGraph, END
 from langgraph.types import Command
+from langchain_core.messages import HumanMessage, AIMessage
 
 from panda.models.agents.state import AgentState
 
@@ -77,6 +78,7 @@ async def run_workflow(user_input: str, thread_id: str | None):
         if not current_state.values:
             payload = {
                 "input": user_input,
+                "messages": [HumanMessage(content=user_input)],
                 "plan": [],
                 "current_step_index": 0,
                 "context": {},
@@ -87,6 +89,7 @@ async def run_workflow(user_input: str, thread_id: str | None):
         else:
             payload = {
                 "input": user_input,
+                "messages": [HumanMessage(content=user_input)],
                 "thread_id": thread_id
             }
 
@@ -119,5 +122,13 @@ async def run_workflow(user_input: str, thread_id: str | None):
 
     final_state = state_after.values
     print(final_state)
+
+    # Append the AI's final response as a message so next turn sees it
+    final_resp = final_state.get("final_response", "")
+    if final_resp:
+        await app.aupdate_state(
+            config,
+            {"messages": [AIMessage(content=final_resp)]}
+        )
     
     return final_state

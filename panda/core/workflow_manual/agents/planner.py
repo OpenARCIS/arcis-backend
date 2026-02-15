@@ -1,5 +1,6 @@
 from typing import List
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage, AIMessage
 
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState, PlanStep
@@ -9,17 +10,42 @@ from panda.core.utils.token_tracker import save_token_usage
 from panda.core.utils.emotion_tracker import save_user_emotion
 
 
+def _format_history(messages: list, max_turns: int = 10) -> str:
+    """Format recent messages into a readable conversation string for the prompt."""
+    if not messages:
+        return "(No prior conversation)"
+    
+    # Take only the last N messages to avoid prompt bloat
+    recent = messages[-max_turns:]
+    lines = []
+    for msg in recent:
+        if isinstance(msg, HumanMessage):
+            lines.append(f"User: {msg.content}")
+        elif isinstance(msg, AIMessage):
+            lines.append(f"Assistant: {msg.content}")
+    
+    return "\n".join(lines) if lines else "(No prior conversation)"
+
+
 async def planner_node(state: AgentState) -> AgentState:
+    
+    history = _format_history(state.get("messages", []))
+    
     planner_prompt = ChatPromptTemplate.from_messages([
         ("system", PLANNER_PROMPT),
-        ("human", "User Request: {input}\n\nGenerate a detailed execution plan.")
+        ("human", """Conversation History:
+{history}
+
+Latest User Request: {input}
+
+Generate a detailed execution plan.""")
     ])
     
     
     llm_client = LLMFactory.get_client_for_agent("planner")
     planner_llm = llm_client.with_structured_output(PlanModel, include_raw=True)
 
-    messages = planner_prompt.format_messages(input=state["input"])
+    messages = planner_prompt.format_messages(input=state["input"], history=history)
     response = await planner_llm.ainvoke(messages)
     
     plan_response = response["parsed"]

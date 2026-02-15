@@ -1,10 +1,27 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage, AIMessage
 
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
 from panda.models.agents.response import ReplannerResponse
 from panda.core.llm.prompts import REPLANNER_PROMPT
 from panda.core.utils.token_tracker import save_token_usage
+
+
+def _format_history(messages: list, max_turns: int = 10) -> str:
+    """Format recent messages into a readable conversation string for the prompt."""
+    if not messages:
+        return "(No prior conversation)"
+    
+    recent = messages[-max_turns:]
+    lines = []
+    for msg in recent:
+        if isinstance(msg, HumanMessage):
+            lines.append(f"User: {msg.content}")
+        elif isinstance(msg, AIMessage):
+            lines.append(f"Assistant: {msg.content}")
+    
+    return "\n".join(lines) if lines else "(No prior conversation)"
 
 
 async def replanner_node(state: AgentState) -> AgentState:
@@ -15,9 +32,14 @@ async def replanner_node(state: AgentState) -> AgentState:
         None
     )
     
+    history = _format_history(state.get("messages", []))
+    
     replanner_prompt = ChatPromptTemplate.from_messages([
         ("system", REPLANNER_PROMPT),
-        ("human", """Execution Report:
+        ("human", """Conversation History:
+{history}
+
+Execution Report:
 
 Current Step: {current_step}
 Tool Output: {tool_output}
@@ -37,6 +59,7 @@ Evaluate the execution and determine next actions.""")
     replanner_llm = llm_client.with_structured_output(ReplannerResponse, include_raw=True)
     
     messages = replanner_prompt.format_messages(
+        history=history,
         current_step=str(current_step) if current_step else "None",
         tool_output=state.get("last_tool_output", "No output"),
         plan_summary=plan_summary
