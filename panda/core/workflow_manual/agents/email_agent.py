@@ -44,6 +44,19 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
     max_iterations = 10
     
     for i in range(max_iterations):
+        # On the last iteration, tell the LLM to stop using tools and produce a final answer
+        if i == max_iterations - 1:
+            messages.append(HumanMessage(
+                content="You have reached the maximum number of tool iterations. "
+                        "Do NOT call any more tools. Synthesize a final answer from the information you have gathered so far."
+            ))
+            print(f"   ⚠️ EMAIL AGENT: Reached max iterations ({max_iterations}), forcing final answer")
+            final_response = await llm_client.ainvoke(messages)
+            if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
+                await save_token_usage("email_agent", final_response.usage_metadata)
+            tool_output = final_response.content
+            break
+
         # Invoke LLM
         email_response = await email_llm.ainvoke(messages)
         
