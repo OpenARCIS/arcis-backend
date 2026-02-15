@@ -17,5 +17,9 @@ class Config(object):
     OPENROUTER_API_KEY = getenv("OPENROUTER_API_KEY")
 
     OAUTHLIB_INSECURE_TRANSPORT = getenv('OAUTHLIB_INSECURE_TRANSPORT', 1) # only for local testing
-    GOOGLE_CLIENT_SECRETS_FILE = getenv('CLIENT_SECRETS_FILE', 'gmail_secret.json')
+    GOOGLE_CLIENT_SECRETS_FILE = getenv('CLIENT_SECRETS_FILE', 'google_credentials.json')
     GOOGLE_REDIRECT_URI = getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/')
+
+    MISTRAL_API_KEY = getenv("MISTRAL_API_KEY")
+    CEREBRAS_API_KEY = getenv("CEREBRAS_API_KEY")
+    GROQ_API_KEY = getenv("GROQ_API_KEY")

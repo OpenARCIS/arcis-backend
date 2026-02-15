@@ -2,14 +2,10 @@ from fastapi import APIRouter, Request, HTTPException
 from aiogoogle import Aiogoogle
 from datetime import datetime
 
-from panda import Config
-from panda.core.tools.gmail import SCOPES, get_client_creds
+from panda.core.external_api.google import SCOPES, GoogleAPI
 from panda.database.mongo.connection import mongo, COLLECTIONS
 
 gmail_router = APIRouter()
-
-
-CLIENT_CREDS = get_client_creds()
 
 
 @gmail_router.get("/gmail/auth/login")
@@ -17,11 +13,11 @@ async def login():
     """
     Generates the Google Login URL using Aiogoogle.
     """
-    aiogoogle = Aiogoogle(client_creds=CLIENT_CREDS)
+    aiogoogle = Aiogoogle(client_creds=GoogleAPI.load_client_creds())
     
     # Generate the authorization URL
     uri = aiogoogle.oauth2.authorization_url(
-        client_creds=CLIENT_CREDS,
+        client_creds=GoogleAPI.load_client_creds(),
         state="some_secure_state_string",
         access_type="offline",
         include_granted_scopes=True,
@@ -44,11 +40,11 @@ async def callback(request: Request):
         raise HTTPException(status_code=400, detail="No code found")
 
     try:
-        aiogoogle = Aiogoogle(client_creds=CLIENT_CREDS)
+        aiogoogle = Aiogoogle(client_creds=GoogleAPI.load_client_creds())
 
         user_creds = await aiogoogle.oauth2.build_user_creds(
             grant=code,
-            client_creds=CLIENT_CREDS,
+            client_creds=GoogleAPI.load_client_creds(),
         )
         
         await mongo.db[COLLECTIONS['users']].update_one(
@@ -66,3 +62,27 @@ async def callback(request: Request):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Auth flow failed: {str(e)}")
+
+
+@gmail_router.get("/gmail/auth/status")
+async def auth_status():
+    """
+    Checks if the user is authenticated with Google.
+    """
+    user = await mongo.db[COLLECTIONS['users']].find_one({"username": "test_user"})
+    if user and "gmail_credentials" in user:
+        return True
+    return False
+
+
+@gmail_router.get("/gmail/auth/logout")
+async def logout():
+    """
+    Logs out the user by removing Gmail credentials from the database.
+    """
+    await mongo.db[COLLECTIONS['users']].update_one(
+        {"username": "test_user"},
+        {"$unset": {"gmail_credentials": "", "auth_updated_at": ""}}
+    )
+    return {"message": "Logged out successfully"}
+

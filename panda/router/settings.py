@@ -3,7 +3,7 @@ from panda.core.llm.config_manager import config_manager
 from panda.router.models.settings import SettingsUpdateModel
 from panda.core.llm.llm_list import (
     MISTRAL_AI, CEREBRAS, GROQ, 
-    OPENAI, GEMINI, ANTHROPIC, OPENROUTER, OLLAMA
+    OPENAI, GEMINI, ANTHROPIC, OPENROUTER
 )
 from panda.models.llm import LLMProvider
 
@@ -21,14 +21,13 @@ async def get_available_models():
     Get list of available LLM models per provider.
     """
     return {
-        LLMProvider.MISTRAL.value: MISTRAL_AI,
+        LLMProvider.MISTRAL_AI.value: MISTRAL_AI,
         LLMProvider.CEREBRAS.value: CEREBRAS,
         LLMProvider.GROQ.value: GROQ,
         LLMProvider.OPENROUTER.value: OPENROUTER, 
         LLMProvider.OPENAI.value: OPENAI, 
         LLMProvider.GEMINI.value: GEMINI,
-        LLMProvider.ANTHROPIC.value: ANTHROPIC,
-        LLMProvider.OLLAMA.value: OLLAMA 
+        LLMProvider.ANTHROPIC.value: ANTHROPIC
     }
 
 

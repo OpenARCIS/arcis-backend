@@ -20,9 +20,3 @@ class UserProfileResponse(BaseModel):
     username: str
     email: EmailStr
     preferences: Optional[Dict[str, Any]] = None
-
-
-class ChatMessage(BaseModel):
-    role: str = Field(..., description="user or assistant")
-    content: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)

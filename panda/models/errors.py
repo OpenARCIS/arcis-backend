@@ -3,3 +3,6 @@ class LLMFailure(Exception):
 
 class InvalidAPIKey(Exception):
     pass
+
+class NotDoneGoogleAuthentication(Exception):
+    pass

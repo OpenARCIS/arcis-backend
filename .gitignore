@@ -207,4 +207,7 @@ marimo/_lsp/
 __marimo__/
 .vscode
 gmail_secret.json
+google_credentials.json
 tests/
+.VSCodeCounter
+API_SCHEMA.md
