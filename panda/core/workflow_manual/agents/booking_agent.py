@@ -39,38 +39,56 @@ Execute this booking/travel task. Provide detailed results.""")
     
     print(f"\n🎫 BOOKING AGENT: Executing - {current_step['description']}")
 
-    # Initial LLM call
-    response = await booking_llm.ainvoke(messages)
-    
-    # Save token usage
-    if hasattr(response, "usage_metadata") and response.usage_metadata:
-            await save_token_usage("booking_agent", response.usage_metadata)
-    elif hasattr(response, "response_metadata") and response.response_metadata.get("token_usage"):
-            await save_token_usage("booking_agent", response.response_metadata.get("token_usage"))
-
-    # Check if agent needs user input
-    if response.content and "[NEED_INPUT]" in response.content:
-        question = response.content.replace("[NEED_INPUT]", "").strip()
-        print(f"   ❓ BOOKING AGENT needs user input: {question}")
-        user_answer = interrupt(question)  # Graph PAUSES here
-
-        # Graph RESUMES here when user replies
-        print(f"   ✅ User provided: {user_answer}")
-        messages.append(response)
-        messages.append(HumanMessage(content=f"User provided: {user_answer}"))
-        response = await booking_llm.ainvoke(messages)
-
-        if hasattr(response, "usage_metadata") and response.usage_metadata:
-            await save_token_usage("booking_agent", response.usage_metadata)
-    
     tool_output = ""
+    max_iterations = 5
     
-    # Handle tool calls if any
-    if response.tool_calls:
-        # Create a map of available tools
-        tool_map = {tool.name: tool for tool in booking_tools}
+    for i in range(max_iterations):
+        # On the last iteration, tell the LLM to stop using tools and produce a final answer
+        if i == max_iterations - 1:
+            messages.append(HumanMessage(
+                content="You have reached the maximum number of tool iterations. "
+                        "Do NOT call any more tools. Synthesize a final answer from the information you have gathered so far."
+            ))
+            print(f"   ⚠️ BOOKING AGENT: Reached max iterations ({max_iterations}), forcing final answer")
+            final_response = await llm_client.ainvoke(messages)
+            if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
+                await save_token_usage("booking_agent", final_response.usage_metadata)
+            tool_output = final_response.content
+            break
+
+        # Invoke LLM
+        response = await booking_llm.ainvoke(messages)
         
+        # Save token usage
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+                await save_token_usage("booking_agent", response.usage_metadata)
+        elif hasattr(response, "response_metadata") and response.response_metadata.get("token_usage"):
+                await save_token_usage("booking_agent", response.response_metadata.get("token_usage"))
+
+        # Check if agent needs user input
+        if response.content and "[NEED_INPUT]" in response.content:
+            question = response.content.replace("[NEED_INPUT]", "").strip()
+            print(f"   ❓ BOOKING AGENT needs user input: {question}")
+            user_answer = interrupt(question)
+
+            print(f"   ✅ User provided: {user_answer}")
+            messages.append(response)
+            messages.append(HumanMessage(content=f"User provided: {user_answer}"))
+            response = await booking_llm.ainvoke(messages)
+
+            if hasattr(response, "usage_metadata") and response.usage_metadata:
+                await save_token_usage("booking_agent", response.usage_metadata)
+
+        # If no tool calls, we are done
+        if not response.tool_calls:
+            tool_output = response.content
+            break
+
+        # Execute tool calls
+        tool_map = {tool.name: tool for tool in booking_tools}
         tool_results = []
+        
+        print(f"   🔄 Iteration {i+1}: Processing {len(response.tool_calls)} tool calls")
         
         for tool_call in response.tool_calls:
             tool_name = tool_call["name"]
@@ -81,7 +99,6 @@ Execute this booking/travel task. Provide detailed results.""")
             if tool_name in tool_map:
                 tool = tool_map[tool_name]
                 try:
-                    # All mock tools are synchronous, but good to be safe with invoke
                     if hasattr(tool, 'ainvoke'):
                         result = await tool.ainvoke(tool_args)
                     else:
@@ -109,22 +126,27 @@ Execute this booking/travel task. Provide detailed results.""")
             for tc, r in zip(response.tool_calls, tool_results)
         ]
         
-        # Get final response with tool outputs
-        final_response = await booking_llm.ainvoke(
-            messages + [response] + tool_messages
-        )
-        
-        # Save token usage (final)
-        if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
-             await save_token_usage("booking_agent", final_response.usage_metadata)
+        # Append to history
+        messages.append(response)
+        messages.extend(tool_messages)
 
+    # Safety net: if loop ended without a final answer
+    if not tool_output and messages and isinstance(messages[-1], ToolMessage):
+        final_response = await booking_llm.ainvoke(messages)
+        if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
+            await save_token_usage("booking_agent", final_response.usage_metadata)
         tool_output = final_response.content
-    else:
-        tool_output = response.content
 
     print(f"   Result: {tool_output}\n")
     
+    # Accumulate output into shared context so other agents can see it
+    updated_context = dict(state.get("context", {}))
+    step_key = current_step["description"]
+    updated_context[step_key] = tool_output
+
     return {
         **state,
-        "last_tool_output": tool_output
+        "last_tool_output": tool_output,
+        "context": updated_context
     }
+

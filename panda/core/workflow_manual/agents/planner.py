@@ -84,6 +84,21 @@ Generate a detailed execution plan.""")
     # Save user emotion
     if plan_response.user_emotion:
         await save_user_emotion(plan_response.user_emotion, state["input"])
+
+    # Short-circuit for simple conversational messages
+    if plan_response.is_conversational:
+        print(f"\n{'='*60}")
+        print(f"💬 PLANNER: Conversational message detected — skipping agent loop")
+        print(f"   Response: {plan_response.direct_response}")
+        print(f"{'='*60}\n")
+        return {
+            **state,
+            "plan": [],
+            "current_step_index": 0,
+            "context": state.get("context", {}),
+            "final_response": plan_response.direct_response or "",
+            "workflow_status": "FINISHED"
+        }
     
     plan_steps: List[PlanStep] = [
         {

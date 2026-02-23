@@ -19,7 +19,18 @@ class PlanStepModel(BaseModel):
 
 class PlanModel(BaseModel):
     """Structured output for the complete plan"""
-    steps: List[PlanStepModel] = Field(description="List of sequential steps to complete the task")
+    is_conversational: bool = Field(
+        default=False,
+        description="True if the message is a simple greeting, chitchat, or general conversation that does NOT require any tool/agent actions. False for anything actionable."
+    )
+    direct_response: Optional[str] = Field(
+        default=None,
+        description="The direct conversational reply when is_conversational=True. Must be friendly, helpful, and context-aware."
+    )
+    steps: List[PlanStepModel] = Field(
+        default_factory=list,
+        description="List of sequential steps to complete the task. Empty when is_conversational=True."
+    )
     user_emotion: Optional[UserEmotion] = Field(
         default=None,
         description="Analysis of the user's emotional state (Required for Manual Flow)"
