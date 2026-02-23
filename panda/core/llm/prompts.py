@@ -221,11 +221,8 @@ RULES:
    - "learned_fact": Acquired knowledge relevant to the user
 5. If there is NOTHING worth saving, return an empty list
 6. Keep facts SHORT and CLEAR. Maximum 1-2 sentences each
-
-Respond with ONLY valid JSON:
-```json
-{"facts": [{"text": "...", "category": "..."}]}
-```"""
+7. Do not call any tools.
+"""
 
 
 INTERVIEWER_PROMPT = """You are Panda's onboarding interviewer. Your goal is to have a friendly, natural conversation with the user to learn about them so the system can serve them better.

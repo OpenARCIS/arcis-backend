@@ -1,10 +1,9 @@
-import json
-
 from langchain_core.prompts import ChatPromptTemplate
 
 from panda.core.llm.factory import LLMFactory
 from panda.core.llm.long_memory import long_memory
 from panda.core.llm.prompts import MEMORY_EXTRACTOR_PROMPT
+from panda.models.agents.response import MemoryExtractionModel
 
 from panda.utils.text import format_messages
 
@@ -35,17 +34,29 @@ async def extract_and_store(messages: list, source: str = "conversation") -> lis
     ])
 
     llm = LLMFactory.get_client_for_agent("memory_extractor")
+    memory_llm = llm.with_structured_output(MemoryExtractionModel, include_raw=True)
     formatted = prompt.format_messages(conversation=conversation_text)
 
     try:
-        response = await llm.ainvoke(formatted)
-        facts = _parse_facts(response.content)
+        response = await memory_llm.ainvoke(formatted)
+        parsed = response["parsed"]
+        
+        # Save token usage
+        if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
+            try:
+                from panda.core.utils.token_tracker import save_token_usage
+                await save_token_usage("memory_extractor", response["raw"].usage_metadata)
+            except ImportError:
+                pass
+                
+        if not parsed or not parsed.facts:
+            print("No key facts extracted from conversation")
+            return []
+            
+        facts = [{"text": f.text, "category": f.category} for f in parsed.facts]
+        
     except Exception as e:
         print(f"Memory extraction failed: {e}")
-        return []
-
-    if not facts:
-        print("No key facts extracted from conversation")
         return []
 
     # Store in Qdrant
@@ -66,37 +77,3 @@ async def extract_and_store(messages: list, source: str = "conversation") -> lis
 
     return facts
 
-
-def _parse_facts(raw: str) -> list[dict]:
-    """Parse the LLM response into a list of fact dicts."""
-    try:
-        # Try to extract JSON from the response
-        text = raw.strip()
-
-        # Handle markdown code blocks
-        if "```json" in text:
-            text = text.split("```json")[1].split("```")[0].strip()
-        elif "```" in text:
-            text = text.split("```")[1].split("```")[0].strip()
-
-        data = json.loads(text)
-
-        if isinstance(data, dict) and "facts" in data:
-            data = data["facts"]
-
-        if not isinstance(data, list):
-            return []
-
-        # Validate each fact
-        valid = []
-        for item in data:
-            if isinstance(item, dict) and "text" in item:
-                valid.append({
-                    "text": item["text"],
-                    "category": item.get("category", "key_detail"),
-                })
-        return valid
-
-    except (json.JSONDecodeError, KeyError, IndexError) as e:
-        print(f"Failed to parse memory extraction response: {e}")
-        return []
