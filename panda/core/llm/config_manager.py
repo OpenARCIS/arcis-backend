@@ -37,7 +37,7 @@ DEFAULT_AGENTS_CONFIG = {
         "model_name": "arcee-ai/trinity-mini:free",
         "temperature": 0.7
     },
-    "general_agent": {
+    "utility_agent": {
         "provider": LLMProvider.GROQ,
         "model_name": "openai/gpt-oss-120b",
         "temperature": 0.7

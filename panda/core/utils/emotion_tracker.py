@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 from panda.database.mongo.connection import mongo, COLLECTIONS
-from panda.models.agents.response import UserEmotion
 
-async def save_user_emotion(emotion: UserEmotion, input_text: str):
+async def save_user_emotion(emotion, input_text: str):
     """
     Saves the user's emotion and input text to MongoDB.
     

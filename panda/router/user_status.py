@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException
 from panda.database.mongo.connection import mongo, COLLECTIONS
-from panda.models.agents.response import UserEmotion
 
 user_status_router = APIRouter()
 
