@@ -4,7 +4,7 @@ from langgraph.types import interrupt
 
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState
-from panda.core.llm.prompts import GENERAL_AGENT_PROMPT
+from panda.core.llm.prompts import UTILITY_AGENT_PROMPT
 from panda.core.utils.token_tracker import save_token_usage
 
 from panda.core.workflow_manual.tools.web_search import web_search
@@ -12,10 +12,10 @@ from panda.core.workflow_manual.tools.calendar import calendar_tools
 from panda.core.workflow_manual.tools.memory_search import memory_search
 
 
-general_tools = [web_search, memory_search] + calendar_tools 
+utility_tools = [web_search, memory_search] + calendar_tools 
 
 
-async def general_agent_node(state: AgentState) -> AgentState:
+async def utility_agent_node(state: AgentState) -> AgentState:
     
     current_step = next(
         (s for s in state["plan"] if s["status"] == "in_progress"),
@@ -25,8 +25,8 @@ async def general_agent_node(state: AgentState) -> AgentState:
     if not current_step:
         return {**state, "last_tool_output": "ERROR: No in-progress step found"}
     
-    general_prompt = ChatPromptTemplate.from_messages([
-        ("system", GENERAL_AGENT_PROMPT),
+    utility_prompt = ChatPromptTemplate.from_messages([
+        ("system", UTILITY_AGENT_PROMPT),
         ("human", """Current Task: {task_description}
 
 Available Context:
@@ -35,13 +35,13 @@ Available Context:
 Execute this task and gather necessary information.""")
     ])
     
-    llm_client = LLMFactory.get_client_for_agent("general_agent")
-    general_llm = llm_client.bind_tools(general_tools)
+    llm_client = LLMFactory.get_client_for_agent("utility_agent")
+    utility_llm = llm_client.bind_tools(utility_tools)
     
-    print(f"\n🔧 GENERAL AGENT: Executing - {current_step['description']}")
+    print(f"\n🔧 UTILITY AGENT: Executing - {current_step['description']}")
     
     # Track the ongoing conversation
-    messages = general_prompt.format_messages(
+    messages = utility_prompt.format_messages(
         task_description=current_step["description"],
         context=str(state.get("context", {}))
     )
@@ -56,35 +56,35 @@ Execute this task and gather necessary information.""")
                 content="You have reached the maximum number of tool iterations. "
                         "Do NOT call any more tools. Synthesize a final answer from the information you have gathered so far."
             ))
-            print(f"   ⚠️ GENERAL AGENT: Reached max iterations ({max_iterations}), forcing final answer")
+            print(f"   ⚠️ UTILITY AGENT: Reached max iterations ({max_iterations}), forcing final answer")
             final_response = await llm_client.ainvoke(messages)
             if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
-                await save_token_usage("general_agent", final_response.usage_metadata)
+                await save_token_usage("utility_agent", final_response.usage_metadata)
             tool_output = final_response.content
             break
 
         # Invoke LLM
-        response = await general_llm.ainvoke(messages)
+        response = await utility_llm.ainvoke(messages)
         
         # Save token usage
         if hasattr(response, "usage_metadata") and response.usage_metadata:
-             await save_token_usage("general_agent", response.usage_metadata)
+             await save_token_usage("utility_agent", response.usage_metadata)
         elif hasattr(response, "response_metadata") and response.response_metadata.get("token_usage"):
-             await save_token_usage("general_agent", response.response_metadata.get("token_usage"))
+             await save_token_usage("utility_agent", response.response_metadata.get("token_usage"))
         
         # Check if agent needs user input
         if response.content and "[NEED_INPUT]" in response.content:
             question = response.content.replace("[NEED_INPUT]", "").strip()
-            print(f"   ❓ GENERAL AGENT needs user input: {question}")
+            print(f"   ❓ UTILITY AGENT needs user input: {question}")
             user_answer = interrupt(question)
 
             print(f"   ✅ User provided: {user_answer}")
             messages.append(response)
             messages.append(HumanMessage(content=f"User provided: {user_answer}"))
-            response = await general_llm.ainvoke(messages)
+            response = await utility_llm.ainvoke(messages)
 
             if hasattr(response, "usage_metadata") and response.usage_metadata:
-                await save_token_usage("general_agent", response.usage_metadata)
+                await save_token_usage("utility_agent", response.usage_metadata)
 
         # If no tool calls, we are done
         if not response.tool_calls:
@@ -92,7 +92,7 @@ Execute this task and gather necessary information.""")
             break
             
         # If there are tool calls, execute them
-        tool_map = {tool.name: tool for tool in general_tools}
+        tool_map = {tool.name: tool for tool in utility_tools}
         tool_results = []
         
         print(f"   🔄 Iteration {i+1}: Processing {len(response.tool_calls)} tool calls")
@@ -140,11 +140,11 @@ Execute this task and gather necessary information.""")
     # If we exited the loop due to max iterations
     if not tool_output and messages and isinstance(messages[-1], ToolMessage):
          # One final call to get the answer based on the last tool outputs
-        final_response = await general_llm.ainvoke(messages)
+        final_response = await utility_llm.ainvoke(messages)
         
         # Save token usage (final)
         if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
-             await save_token_usage("general_agent", final_response.usage_metadata)
+             await save_token_usage("utility_agent", final_response.usage_metadata)
 
         tool_output = final_response.content
 

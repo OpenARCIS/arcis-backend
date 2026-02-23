@@ -8,7 +8,7 @@ from panda.core.workflow_manual.agents.planner import planner_node
 from panda.core.workflow_manual.agents.supervisor import supervisor_node, supervisor_router
 from panda.core.workflow_manual.agents.email_agent import email_agent_node
 from panda.core.workflow_manual.agents.booking_agent import booking_agent_node
-from panda.core.workflow_manual.agents.general_agent import general_agent_node
+from panda.core.workflow_manual.agents.utility_agent import utility_agent_node
 from panda.core.workflow_manual.agents.replanner import replanner_node, replanner_router
 
 from panda.core.llm.short_memory import checkpointer # mongodb per thread memory
@@ -23,7 +23,7 @@ def create_workflow() -> StateGraph:
     workflow.add_node("supervisor", supervisor_node)
     workflow.add_node("email_agent", email_agent_node)
     workflow.add_node("booking_agent", booking_agent_node)
-    workflow.add_node("general_agent", general_agent_node)
+    workflow.add_node("utility_agent", utility_agent_node)
     workflow.add_node("replanner", replanner_node)
     
     # planner routes to supervisor OR directly to END for simple messages
@@ -43,14 +43,14 @@ def create_workflow() -> StateGraph:
         {
             "email_agent": "email_agent",
             "booking_agent": "booking_agent",
-            "general_agent": "general_agent",
+            "utility_agent": "utility_agent",
             "replanner": "replanner"
         }
     )
     
     workflow.add_edge("email_agent", "replanner")
     workflow.add_edge("booking_agent", "replanner")
-    workflow.add_edge("general_agent", "replanner")
+    workflow.add_edge("utility_agent", "replanner")
     
     workflow.add_conditional_edges(
         "replanner",

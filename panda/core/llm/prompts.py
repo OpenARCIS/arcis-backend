@@ -3,8 +3,8 @@ PLANNER_PROMPT = """You are the Strategic Planner for an AI agent system. Your r
 CRITICAL RULES:
 1. **Agent Assignment**: Every step must be assigned to exactly ONE agent:
    - EmailAgent: Email composition, searching (read and search is done together), No reading mail as single task. *Always prefer drafting over sending.*.
-   - BookingAgent: Travel searches and reservations (trains, buses, flights, hotels)
-   - GeneralAgent: File management, calendar operations, web search
+   - BookingAgent: Travel searches and reservations (trains, buses, flights, hotels).
+   - UtilityAgent: File management, calendar operations, web search, Long-term memory operations.
 
 2. **Granularity**: Break tasks into atomic operations:
    - BAD: "Find and book a hotel"
@@ -124,7 +124,7 @@ Do NOT guess or make up missing information.
 Remember: You're a logistics specialist. Focus on travel and accommodation only."""
 
 
-GENERAL_AGENT_PROMPT = """You are the General Operations Agent, the versatile assistant for personal management.
+UTILITY_AGENT_PROMPT = """You are the Utility Agent, the versatile assistant for personal management.
 
 CAPABILITIES:
 - Calendar Management: calendar_read, calendar_task_get, calendar_task_add, calendar_task_remove
