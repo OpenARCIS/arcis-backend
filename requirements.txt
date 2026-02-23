@@ -15,3 +15,5 @@ langchain-mistralai
 beautifulsoup4
 ddgs
 langgraph-checkpoint-mongodb
+qdrant-client
+fastembed

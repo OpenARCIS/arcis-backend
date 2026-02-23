@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 if not os.environ.get("ENV"):
     load_dotenv('.env', override=True)
 
-class Config(object):
+class Config:
     try: 
         DATABASE_URL = getenv("DATABASE_URL")
         DATABASE_NAME = getenv("DATABASE_NAME", 'panda_db')
@@ -23,3 +23,8 @@ class Config(object):
     MISTRAL_API_KEY = getenv("MISTRAL_API_KEY")
     CEREBRAS_API_KEY = getenv("CEREBRAS_API_KEY")
     GROQ_API_KEY = getenv("GROQ_API_KEY")
+
+    # Qdrant (Long-Term Memory)
+    QDRANT_URL = getenv("QDRANT_URL", "http://localhost:6333")
+    QDRANT_API_KEY = getenv("QDRANT_API_KEY", None)
+    EMBEDDING_MODE = getenv("EMBEDDING_MODE", "offline")  # "offline" (FastEmbed) or "online" (Gemini)

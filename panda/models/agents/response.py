@@ -61,3 +61,19 @@ class ReplannerResponse(BaseModel):
         default="",
         description="Final response if workflow is complete"
     )
+
+
+class MemoryFactModel(BaseModel):
+    """Structured output for a single memory fact"""
+    text: str = Field(description="Concrete, factual information. Maximum 1-2 sentences.")
+    category: Literal["user_profile", "preference", "key_detail", "learned_fact"] = Field(
+        description="Category of the fact"
+    )
+
+
+class MemoryExtractionModel(BaseModel):
+    """Structured output for the complete memory distillation"""
+    facts: List[MemoryFactModel] = Field(
+        default_factory=list,
+        description="List of extracted facts from the conversation"
+    )

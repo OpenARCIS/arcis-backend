@@ -46,6 +46,16 @@ DEFAULT_AGENTS_CONFIG = {
         "provider": LLMProvider.GROQ,
         "model_name": "openai/gpt-oss-120b",
         "temperature": 0.7
+    },
+    "memory_extractor": {
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
+        "temperature": 0.3
+    },
+    "interviewer": {
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
+        "temperature": 0.7
     }
 }
 

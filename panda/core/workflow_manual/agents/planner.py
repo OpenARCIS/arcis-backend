@@ -8,6 +8,7 @@ from panda.models.agents.response import PlanModel
 from panda.core.llm.prompts import PLANNER_PROMPT
 from panda.core.utils.token_tracker import save_token_usage
 from panda.core.utils.emotion_tracker import save_user_emotion
+from panda.core.llm.long_memory import long_memory
 
 
 def _format_history(messages: list, max_turns: int = 10) -> str:
@@ -27,14 +28,36 @@ def _format_history(messages: list, max_turns: int = 10) -> str:
     return "\n".join(lines) if lines else "(No prior conversation)"
 
 
+def _format_memories(memories: list) -> str:
+    """Format long-term memory results into context text."""
+    if not memories:
+        return ""
+    lines = [f"- {m['text']}" for m in memories]
+    return "\n".join(lines)
+
+
 async def planner_node(state: AgentState) -> AgentState:
     
     history = _format_history(state.get("messages", []))
+
+    # Fetch relevant long-term memories
+    long_term_context = ""
+    try:
+        if long_memory.client:
+            memories = long_memory.search(state["input"], top_k=5)
+            long_term_context = _format_memories(memories)
+            if long_term_context:
+                print(f"🧠 Long-term memory: found {len(memories)} relevant memories")
+    except Exception as e:
+        print(f"⚠️ Long-term memory lookup failed: {e}")
     
     planner_prompt = ChatPromptTemplate.from_messages([
         ("system", PLANNER_PROMPT),
         ("human", """Conversation History:
 {history}
+
+User Context (from long-term memory):
+{long_term_context}
 
 Latest User Request: {input}
 
@@ -45,7 +68,11 @@ Generate a detailed execution plan.""")
     llm_client = LLMFactory.get_client_for_agent("planner")
     planner_llm = llm_client.with_structured_output(PlanModel, include_raw=True)
 
-    messages = planner_prompt.format_messages(input=state["input"], history=history)
+    messages = planner_prompt.format_messages(
+        input=state["input"],
+        history=history,
+        long_term_context=long_term_context or "(No stored context)",
+    )
     response = await planner_llm.ainvoke(messages)
     
     plan_response = response["parsed"]
@@ -89,9 +116,14 @@ Generate a detailed execution plan.""")
         print(f"  {step['id']}. [{step['assigned_agent']}] {step['description']}")
     print(f"{'='*60}\n")
     
+    # Inject long-term memories into context so agents can use them
+    ctx = {}
+    if long_term_context:
+        ctx["long_term_memory"] = long_term_context
+
     return {
         **state,
         "plan": plan_steps,
         "current_step_index": 0,
-        "context": state.get("context", {})
+        "context": ctx,
     }
