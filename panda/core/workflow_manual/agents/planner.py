@@ -7,7 +7,6 @@ from panda.models.agents.state import AgentState, PlanStep
 from panda.models.agents.response import PlanModel
 from panda.core.llm.prompts import PLANNER_PROMPT
 from panda.core.utils.token_tracker import save_token_usage
-from panda.core.utils.emotion_tracker import save_user_emotion
 from panda.core.llm.long_memory import long_memory
 
 
