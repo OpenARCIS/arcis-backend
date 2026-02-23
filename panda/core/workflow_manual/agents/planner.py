@@ -81,10 +81,6 @@ Generate a detailed execution plan.""")
     if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
         await save_token_usage("planner", response["raw"].usage_metadata)
 
-    # Save user emotion
-    if plan_response.user_emotion:
-        await save_user_emotion(plan_response.user_emotion, state["input"])
-
     # Short-circuit for simple conversational messages
     if plan_response.is_conversational:
         print(f"\n{'='*60}")

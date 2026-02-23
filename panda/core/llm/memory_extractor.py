@@ -3,6 +3,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from panda.core.llm.factory import LLMFactory
 from panda.core.llm.long_memory import long_memory
 from panda.core.llm.prompts import MEMORY_EXTRACTOR_PROMPT
+from panda.core.utils.token_tracker import save_token_usage
+
 from panda.models.agents.response import MemoryExtractionModel
 
 from panda.utils.text import format_messages
@@ -41,14 +43,8 @@ async def extract_and_store(messages: list, source: str = "conversation") -> lis
         response = await memory_llm.ainvoke(formatted)
         parsed = response["parsed"]
         
-        # Save token usage
         if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
-            try:
-                from panda.core.utils.token_tracker import save_token_usage
-                await save_token_usage("memory_extractor", response["raw"].usage_metadata)
-            except ImportError:
-                pass
-                
+            await save_token_usage("memory_extractor", response["raw"].usage_metadata)
         if not parsed or not parsed.facts:
             print("No key facts extracted from conversation")
             return []
@@ -59,19 +55,32 @@ async def extract_and_store(messages: list, source: str = "conversation") -> lis
         print(f"Memory extraction failed: {e}")
         return []
 
-    # Store in Qdrant
-    items = [
-        {
-            "text": fact["text"],
-            "category": fact.get("category", "key_detail"),
-            "source": source,
-        }
-        for fact in facts
-    ]
+    unique_items = []
+    for fact in facts:
+        # Check if a very similar fact already exists
+        existing = long_memory.search(
+            query=fact["text"],
+            top_k=1,
+            category=fact.get("category"),
+            score_threshold=0.85 # high value for very close matches
+        )
+        
+        if not existing:
+            unique_items.append({
+                "text": fact["text"],
+                "category": fact.get("category", "key_detail"),
+                "source": source,
+            })
+        else:
+            print(f"Skipping duplicate fact (score {existing[0]['score']:.2f}): {fact['text']}")
+
+    if not unique_items:
+        print("No new unique facts to store.")
+        return facts
 
     try:
-        long_memory.store_many(items)
-        print(f"Extracted and stored {len(items)} facts from conversation")
+        long_memory.store_many(unique_items)
+        print(f"Extracted and stored {len(unique_items)} new facts from conversation")
     except Exception as e:
         print(f"Failed to store extracted memories: {e}")
 
