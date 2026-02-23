@@ -25,6 +25,7 @@ from panda.core.llm.long_memory import long_memory
 
 from panda.core.external_api.gmail import gmail_api
 from panda.core.workflow_auto.auto_flow import run_autonomous_processing
+from panda.core.tts.tts_manager import tts_manager
 
 
 async def some_cron_jobs():
@@ -42,7 +43,14 @@ async def lifespan(app: FastAPI):
     try:
         long_memory.init(mode=Config.EMBEDDING_MODE)
     except Exception as e:
-        print(f"\u26a0\ufe0f Long-term memory init failed (non-fatal): {e}")
+        print(f"⚠️ Long-term memory init failed (non-fatal): {e}")
+        
+
+    try:
+        loop = asyncio.get_event_loop() # Avoid blocking event loop for slow model loads
+        await loop.run_in_executor(None, tts_manager.initialize, Config.TTS_DEFAULT_VOICE) 
+    except Exception as e:
+        print(f"⚠️ TTS Manager initialization failed: {e}")
     
     cron_task = asyncio.create_task(some_cron_jobs())
 
