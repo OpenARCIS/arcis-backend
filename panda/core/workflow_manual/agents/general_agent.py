@@ -9,9 +9,10 @@ from panda.core.utils.token_tracker import save_token_usage
 
 from panda.core.workflow_manual.tools.web_search import web_search
 from panda.core.workflow_manual.tools.calendar import calendar_tools
+from panda.core.workflow_manual.tools.memory_search import memory_search
 
 
-general_tools = [web_search] + calendar_tools 
+general_tools = [web_search, memory_search] + calendar_tools 
 
 
 async def general_agent_node(state: AgentState) -> AgentState:
