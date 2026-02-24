@@ -17,3 +17,5 @@ ddgs
 langgraph-checkpoint-mongodb
 qdrant-client
 fastembed
+pocket-tts
+soundfile

@@ -28,3 +28,6 @@ class Config:
     QDRANT_URL = getenv("QDRANT_URL", "http://localhost:6333")
     QDRANT_API_KEY = getenv("QDRANT_API_KEY", None)
     EMBEDDING_MODE = getenv("EMBEDDING_MODE", "offline")  # "offline" (FastEmbed) or "online" (Gemini)
+
+    # TTS Config
+    TTS_DEFAULT_VOICE = getenv("TTS_DEFAULT_VOICE", "alba")
