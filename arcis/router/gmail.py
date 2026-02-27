@@ -33,8 +33,7 @@ async def callback(request: Request):
     """
     Exchanges the auth code for user credentials asynchronously and saves to MongoDB.
     """
-    code = request.query_params.get("code")
-    state = request.query_params.get("state") 
+    code = request.query_params.get("code") 
 
     if not code:
         raise HTTPException(status_code=400, detail="No code found")

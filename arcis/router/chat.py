@@ -4,7 +4,8 @@ from typing import List
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 
-from .models.chat import *
+from .models.chat import ChatRequest, MessageSchema, ThreadPreviewSchema
+
 from arcis.core.workflow_manual.manual_flow import run_workflow
 from arcis.core.llm.chat_history import save_message, get_thread_history, get_all_threads
 from arcis.core.tts.tts_manager import tts_manager

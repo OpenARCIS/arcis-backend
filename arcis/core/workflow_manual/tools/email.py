@@ -1,4 +1,3 @@
-from typing import Optional
 from langchain.tools import tool
 from arcis.core.external_api.gmail import gmail_api
 

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional
+from typing import Dict
 from arcis.models.llm import LLMProvider
 
 class AgentConfigModel(BaseModel):
