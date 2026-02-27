@@ -13,7 +13,7 @@ async def analyzer_node(state: AgentState) -> AgentState:
     email_content = state["input"]
     
     print("\n" + "="*80)
-    print(f"📧 ANALYZER: Analyzing incoming message...")
+    print("📧 ANALYZER: Analyzing incoming message...")
     # print(f"   Content Preview: {email_content[:100]}...")
     
     analyzer_prompt = ChatPromptTemplate.from_messages([

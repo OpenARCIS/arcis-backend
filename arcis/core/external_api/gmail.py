@@ -31,7 +31,8 @@ class GmailAPI(GoogleAPI):
                     return clean_text(part['body'].get('data', ''))
                 if 'parts' in part:
                     found = search_parts(part['parts'], mime_type)
-                    if found: return found
+                    if found:
+                        return found
             return None
 
         text_content = None
