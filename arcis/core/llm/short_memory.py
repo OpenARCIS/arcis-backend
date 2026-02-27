@@ -1,7 +1,7 @@
 from arcis import Config
 
 from langgraph.checkpoint.mongodb import MongoDBSaver
-from pymongo import MongoClient, DESCENDING
+from pymongo import MongoClient
 
 # seperate client for mongodb cuz async motor is deprecated in langgraph
 # dual client is safe for now

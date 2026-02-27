@@ -13,7 +13,6 @@ from arcis.router.settings import settings_router
 from arcis.router.calendar import calendar_router
 from arcis.router.chat import chat_router
 from arcis.router.auto_flow import auto_flow_router
-from arcis.router.auto_flow import auto_flow_router
 from arcis.router.user_status import user_status_router
 from arcis.router.token_tracker import token_tracker_router
 from arcis.router.onboarding import onboarding_router
@@ -24,7 +23,6 @@ from arcis.core.llm.config_manager import config_manager
 from arcis.core.llm.long_memory import long_memory
 
 from arcis.core.external_api.gmail import gmail_api
-from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
 from arcis.core.tts.tts_manager import tts_manager
 
 

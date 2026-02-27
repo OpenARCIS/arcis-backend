@@ -29,7 +29,7 @@ class TTSManager:
                 self.voice_states["default"] = self.default_voice_state
                 print("[INFO] Default voice state loaded successfully.")
             else:
-                print(f"[WARNING] No default voice provided. First synthesis might lag.")
+                print("[WARNING] No default voice provided. First synthesis might lag.")
         except Exception as e:
             error_msg = str(e)
             print(f"[ERROR] Failed to initialize TTS: {error_msg}")
@@ -82,7 +82,7 @@ class TTSManager:
         Yields text content and Base64 audio chunks.
         """
         if not self.tts_model:
-            yield f"data: {{\"type\": \"error\", \"message\": \"TTS not available\"}}\n\n"
+            yield "data: {\"type\": \"error\", \"message\": \"TTS not available\"}\n\n"
             return
             
         voice_state = self.voice_states.get(voice_id, self.default_voice_state)

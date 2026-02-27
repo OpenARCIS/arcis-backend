@@ -6,12 +6,12 @@ if not os.environ.get("ENV"):
     load_dotenv('.env', override=True)
 
 class Config:
-    try: 
-        DATABASE_URL = getenv("DATABASE_URL")
-        DATABASE_NAME = getenv("DATABASE_NAME", 'arcis_db')
-    except:
-        print("CORE : Essential Configs are missing")
+    DATABASE_URL = getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        print("CORE : Essential Configs (DATABASE_URL) are missing")
         exit(1)
+
+    DATABASE_NAME = getenv("DATABASE_NAME", 'arcis_db')
 
     GEMINI_API = getenv('GEMINI_API')
     OPENROUTER_API_KEY = getenv("OPENROUTER_API_KEY")

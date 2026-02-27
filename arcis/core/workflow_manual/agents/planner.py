@@ -83,7 +83,7 @@ Generate a detailed execution plan.""")
     # Short-circuit for simple conversational messages
     if plan_response.is_conversational:
         print(f"\n{'='*60}")
-        print(f"💬 PLANNER: Conversational message detected — skipping agent loop")
+        print("💬 PLANNER: Conversational message detected — skipping agent loop")
         print(f"   Response: {plan_response.direct_response}")
         print(f"{'='*60}\n")
         return {

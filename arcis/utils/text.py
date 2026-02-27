@@ -7,7 +7,8 @@ extractor = URLExtract()
 
 def clean_text(data):
     """Decodes base64url encoded string."""
-    if not data: return ""
+    if not data:
+        return ""
     clean_data = data.replace("-", "+").replace("_", "/")
     return base64.b64decode(clean_data).decode('utf-8')
 

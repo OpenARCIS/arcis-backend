@@ -1,7 +1,7 @@
-from typing import Optional, List
 from datetime import datetime
 from langchain.tools import tool
-from arcis.core.external_api.calendar import calendar_wrapper, CalendarItem
+
+from arcis.core.external_api.internal_calendar import calendar_wrapper, CalendarItem
 
 @tool
 async def calendar_add_item(title: str, item_type: str, start_time: str, end_time: str = None, description: str = "") -> str:

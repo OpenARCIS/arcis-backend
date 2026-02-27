@@ -153,7 +153,7 @@ async def run_autonomous_processing():
         was_interrupted = await _check_and_save_interrupt(app, config, source_context)
 
         if was_interrupted:
-            print(f"📋 Saved to pending items for user review.")
+            print("📋 Saved to pending items for user review.")
         else:
             state_after = await app.aget_state(config)
             final = state_after.values

@@ -95,7 +95,6 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
         for tool_call in email_response.tool_calls:
             tool_name = tool_call["name"]
             tool_args = tool_call["args"]
-            tool_id = tool_call["id"]
             
             print(f"   🔧 Calling tool: {tool_name} with args: {tool_args}")
             

@@ -1,7 +1,9 @@
 import calendar
+
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
+from bson.errors import InvalidId
 from arcis.database.mongo.connection import mongo
 from pydantic import BaseModel, Field
 
@@ -43,7 +45,7 @@ class CalendarWrapper:
         """Retrieves a single item by ID."""
         try:
             oid = ObjectId(item_id)
-        except:
+        except InvalidId:
             return None
         return await self.collection.find_one({"_id": oid})
 
@@ -51,7 +53,7 @@ class CalendarWrapper:
         """Updates fields of a specific item."""
         try:
             oid = ObjectId(item_id)
-        except:
+        except InvalidId:
             return False
             
         result = await self.collection.update_one(
@@ -64,7 +66,7 @@ class CalendarWrapper:
         """Deletes an item permanently."""
         try:
             oid = ObjectId(item_id)
-        except:
+        except InvalidId:
             return False
         result = await self.collection.delete_one({"_id": oid})
         return result.deleted_count > 0
@@ -109,7 +111,6 @@ class CalendarWrapper:
         ]
         """
         # 1. Calculate time range for the query
-        num_days = calendar.monthrange(year, month)[1]
         start_date = datetime(year, month, 1)
         # End date is the 1st of the next month
         if month == 12:
