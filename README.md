@@ -7,11 +7,12 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/python-3.11+-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/framework-FastAPI-009688?style=flat-square" />
-  <img src="https://img.shields.io/badge/orchestration-LangGraph-orange?style=flat-square" />
-  <img src="https://img.shields.io/badge/database-MongoDB-47A248?style=flat-square" />
-  <img src="https://img.shields.io/badge/memory-Qdrant-DC382D?style=flat-square" />
+  <img src="https://img.shields.io/badge/Python_3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/LangGraph-FF7043?style=for-the-badge&logo=langchain&logoColor=white" alt="LangGraph" />
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Qdrant-DC382D?style=for-the-badge&logo=qdrant&logoColor=white" alt="Qdrant" />
+  <img src="https://img.shields.io/codacy/grade/b0de879d493544f8b3f0e88572a61735?style=for-the-badge&logo=codacy&logoColor=white" alt="Codacy Grade" />
 </p>
 
 ---
