@@ -137,7 +137,7 @@ Create a `.env` file in the project root. The server loads it automatically in n
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `DATABASE_URL` | MongoDB connection string | `mongodb://user:pass@host:27017/` |
-| `DATABASE_NAME` | MongoDB database name | `panda_db` |
+| `DATABASE_NAME` | MongoDB database name | `arcis_db` |
 
 #### LLM API Keys
 
@@ -178,7 +178,7 @@ You need **at least one** LLM provider key. The system uses a factory pattern, s
 ```env
 # Database
 DATABASE_URL=mongodb://user:password@localhost:27017/
-DATABASE_NAME=panda_db
+DATABASE_NAME=arcis_db
 
 # LLM Providers (add keys for providers you use)
 GEMINI_API=your_gemini_api_key
@@ -243,10 +243,10 @@ ARCIS uses [**Pocket TTS**](https://github.com/kyutai-labs/pocket-tts) for real-
 
 ```bash
 # Run the server (default: port 8501)
-python -m panda
+python -m arcis
 
 # Or with uvicorn directly
-uvicorn panda.__main__:api_server --host 0.0.0.0 --port 8501 --reload
+uvicorn arcis.__main__:api_server --host 0.0.0.0 --port 8501 --reload
 ```
 
 The API documentation is available at:
@@ -306,7 +306,7 @@ arcis-backend/
 ├── google_credentials.json      # Google OAuth client credentials
 ├── requirements.txt             # Python dependencies
 │
-└── panda/                       # Main application package
+└── arcis/                       # Main application package
     ├── __init__.py               # Exports Config
     ├── __main__.py               # FastAPI app, lifespan, middleware, router registration
     │

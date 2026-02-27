@@ -8,7 +8,7 @@ if not os.environ.get("ENV"):
 class Config:
     try: 
         DATABASE_URL = getenv("DATABASE_URL")
-        DATABASE_NAME = getenv("DATABASE_NAME", 'panda_db')
+        DATABASE_NAME = getenv("DATABASE_NAME", 'arcis_db')
     except:
         print("CORE : Essential Configs are missing")
         exit(1)
