@@ -1,19 +1,24 @@
 import uuid
 
+from datetime import datetime, timezone
+
 from langgraph.graph import StateGraph, END
 from langgraph.types import Command
 
 from arcis.models.agents.state import AgentState
+from arcis.core.external_api.gmail import gmail_api
+
 from arcis.core.workflow_auto.nodes.analyzer import analyzer_node
 from arcis.core.workflow_manual.agents.supervisor import supervisor_node, supervisor_router
 from arcis.core.workflow_manual.agents.email_agent import email_agent_node
 from arcis.core.workflow_manual.agents.booking_agent import booking_agent_node
 from arcis.core.workflow_manual.agents.utility_agent import utility_agent_node
 from arcis.core.workflow_manual.agents.replanner import replanner_node, replanner_router
-from arcis.core.external_api.gmail import gmail_api
 
 from arcis.core.llm.short_memory import checkpointer
 from arcis.core.llm.pending_interrupt import save_pending, get_pending_by_id, resolve_pending
+
+from arcis.database.mongo.connection import mongo, COLLECTIONS
 
 
 def create_auto_workflow() -> StateGraph:
@@ -107,7 +112,7 @@ async def run_autonomous_processing():
     print("="*80)
     
     try:
-        emails = await gmail_api.get_n_mails(3)
+        emails = await gmail_api.get_n_mails(5)
         print(f"📥 Found {len(emails)} unread emails.")
     except Exception as e:
         print(f"❌ Error fetching emails: {e}")
@@ -120,6 +125,11 @@ async def run_autonomous_processing():
     app = _compile_auto_app()
 
     for email in emails:
+        existing_email = await mongo.db[COLLECTIONS['processed_emails']].find_one({"email_id": email["id"]})
+        if existing_email:
+            print(f"Skipping already processed email: {email['subject']}")
+            continue
+
         thread_id = str(uuid.uuid4())
         config = {"configurable": {"thread_id": thread_id}}
 
@@ -144,6 +154,21 @@ async def run_autonomous_processing():
         }
         
         await app.ainvoke(initial_state, config)
+
+        try:
+            await mongo.db[COLLECTIONS['processed_emails']].update_one(
+                {"email_id": email["id"]},
+                {"$set": {
+                    "email_id": email["id"],
+                    "thread_id": thread_id,
+                    "subject": email.get("subject", ""),
+                    "sender": email.get("sender", ""),
+                    "processed_at": datetime.now(timezone.utc)
+                }},
+                upsert=True
+            )
+        except Exception as e:
+            print(f"⚠️ Failed to save processed email to DB: {e}")
 
         # Check if graph paused at an interrupt
         source_context = {

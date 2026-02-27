@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from arcis import Config
 
-from arcis.router.routes import router
 from arcis.router.gmail import gmail_router
 from arcis.router.settings import settings_router
 from arcis.router.calendar import calendar_router
@@ -25,9 +24,14 @@ from arcis.core.llm.long_memory import long_memory
 from arcis.core.external_api.gmail import gmail_api
 from arcis.core.tts.tts_manager import tts_manager
 
+from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
 
-async def some_cron_jobs():
+
+async def check_emails_cron():
     try:
+        while True:
+            await asyncio.sleep(Config.AUTO_CHECK_INTERVAL)
+            await run_autonomous_processing()
         return True
     except asyncio.CancelledError:
         pass
@@ -50,9 +54,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"⚠️ TTS Manager initialization failed: {e}")
     
-    cron_task = asyncio.create_task(some_cron_jobs())
-
-    #asyncio.create_task(run_autonomous_processing())
+    cron_task = asyncio.create_task(check_emails_cron())
     
     yield
     
@@ -65,7 +67,7 @@ async def lifespan(app: FastAPI):
     await mongo.disconnect()
 
 
-api_server = FastAPI(title="PANDA - API", lifespan=lifespan)
+api_server = FastAPI(title="ARCIS - API", lifespan=lifespan)
 
 api_server.add_middleware(
     CORSMiddleware,

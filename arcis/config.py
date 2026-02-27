@@ -13,6 +13,8 @@ class Config:
 
     DATABASE_NAME = getenv("DATABASE_NAME", 'arcis_db')
 
+    AUTO_CHECK_INTERVAL = getenv("AUTO_CHECK_INTERVAL", 300)
+
     GEMINI_API = getenv('GEMINI_API')
     OPENROUTER_API_KEY = getenv("OPENROUTER_API_KEY")
 
