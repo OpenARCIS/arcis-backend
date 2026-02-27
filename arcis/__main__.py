@@ -77,7 +77,6 @@ api_server.add_middleware(
     allow_headers=["*"],
 )
 
-api_server.include_router(router)
 api_server.include_router(gmail_router)
 api_server.include_router(settings_router)
 api_server.include_router(calendar_router)
