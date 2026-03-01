@@ -10,6 +10,7 @@ from qdrant_client.models import (
 from fastembed import TextEmbedding
 
 from arcis import Config
+from arcis.logger import LOGGER
 
 COLLECTION_NAME = "arcis_long_memory"
 EMBEDDING_DIM_FASTEMBED = 384
@@ -57,7 +58,7 @@ class LongTermMemory:
             self._setup_fastembed()
 
         self._ensure_collection()
-        print("LongTermMemory initialized")
+        LOGGER.info("LongTermMemory initialized")
 
 
     def _setup_fastembed(self):
@@ -87,7 +88,7 @@ class LongTermMemory:
                     distance=Distance.COSINE,
                 ),
             )
-            print(f"Created Qdrant collection: {COLLECTION_NAME}")
+            LOGGER.info(f"Created Qdrant collection: {COLLECTION_NAME}")
 
 
     def embed(self, texts: list[str]) -> list[list[float]]:
@@ -133,7 +134,7 @@ class LongTermMemory:
             collection_name=COLLECTION_NAME,
             points=[PointStruct(id=point_id, vector=vector, payload=payload)],
         )
-        print(f"Stored memory [{category}]: {text[:80]}...")
+        LOGGER.debug(f"Stored memory [{category}]: {text[:80]}...")
         return point_id
 
 
@@ -168,7 +169,7 @@ class LongTermMemory:
             ))
 
         self.client.upsert(collection_name=COLLECTION_NAME, points=points)
-        print(f"Stored {len(points)} memories in bulk")
+        LOGGER.debug(f"Stored {len(points)} memories in bulk")
         return point_ids
 
 
@@ -217,7 +218,7 @@ class LongTermMemory:
             collection_name=COLLECTION_NAME,
             points_selector=[point_id],
         )
-        print(f"Deleted memory: {point_id}")
+        LOGGER.debug(f"Deleted memory: {point_id}")
 
 
 long_memory = LongTermMemory()

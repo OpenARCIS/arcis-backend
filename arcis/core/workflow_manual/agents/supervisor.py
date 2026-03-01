@@ -5,6 +5,7 @@ from arcis.core.llm.prompts import SUPERVISOR_PROMPT
 from arcis.models.agents.state import AgentState
 from arcis.models.agents.response import SupervisorRouterResponse
 from arcis.core.utils.token_tracker import save_token_usage
+from arcis.logger import LOGGER
 
 
 async def supervisor_node(state: AgentState) -> AgentState:
@@ -12,7 +13,7 @@ async def supervisor_node(state: AgentState) -> AgentState:
     pending_steps = [s for s in state["plan"] if s["status"] == "pending"]
     
     if not pending_steps:
-        print("\n🎯 SUPERVISOR: No pending steps, routing to replanner\n")
+        LOGGER.info("SUPERVISOR: No pending steps, routing to replanner")
         return {**state, "next_node": "replanner"}
     
     current_step = pending_steps[0]
@@ -52,8 +53,8 @@ Determine the next node to route to.""")
     if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
         await save_token_usage("supervisor", response["raw"].usage_metadata)
     
-    print(f"\n🎯 SUPERVISOR: Routing to {routing_response.next_node}")
-    print(f"   Reason: {routing_response.reasoning}\n")
+    LOGGER.info(f"SUPERVISOR: Routing to {routing_response.next_node}")
+    LOGGER.debug(f"Reason: {routing_response.reasoning}")
     
     # Mark current step as in_progress
     updated_plan = state["plan"].copy()

@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 from arcis.database.mongo.connection import mongo, COLLECTIONS
+from arcis.logger import LOGGER
+
 
 async def save_user_emotion(emotion, input_text: str):
     """
@@ -21,6 +23,6 @@ async def save_user_emotion(emotion, input_text: str):
     try:
         if mongo.db is not None:
             await mongo.db[COLLECTIONS['user_emotions']].insert_one(record)
-            print(f"😊 Saved user emotion: {emotion.model_dump()}")
+            LOGGER.debug(f"Saved user emotion: {emotion.model_dump()}")
     except Exception as e:
-        print(f"⚠️ Failed to save user emotion: {e}")
+        LOGGER.error(f"Failed to save user emotion: {e}")

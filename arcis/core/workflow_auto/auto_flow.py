@@ -19,7 +19,7 @@ from arcis.core.llm.short_memory import checkpointer
 from arcis.core.llm.pending_interrupt import save_pending, get_pending_by_id, resolve_pending
 
 from arcis.database.mongo.connection import mongo, COLLECTIONS
-
+from arcis.logger import LOGGER
 
 def create_auto_workflow() -> StateGraph:
 
@@ -93,7 +93,7 @@ async def _check_and_save_interrupt(app, config, source_context: dict) -> bool:
         for task in state_after.tasks:
             if hasattr(task, 'interrupts') and task.interrupts:
                 question = str(task.interrupts[0].value)
-                print(f"⏸️ Auto flow interrupted: {question}")
+                LOGGER.info(f"Auto flow interrupted: {question}")
                 save_pending(thread_id, question, source_context)
                 return True
         # Fallback
@@ -107,19 +107,19 @@ async def run_autonomous_processing():
     """
     Main entry point for autonomous email processing.
     """
-    print("\n" + "="*80)
-    print("🤖 STARTING AUTONOMOUS EMAIL PROCESSING")
-    print("="*80)
+    LOGGER.info("="*80)
+    LOGGER.info("STARTING AUTONOMOUS EMAIL PROCESSING")
+    LOGGER.info("="*80)
     
     try:
         emails = await gmail_api.get_n_mails(5)
-        print(f"📥 Found {len(emails)} unread emails.")
+        LOGGER.info(f"Found {len(emails)} unread emails.")
     except Exception as e:
-        print(f"❌ Error fetching emails: {e}")
+        LOGGER.error(f"Error fetching emails: {e}")
         return
 
     if not emails:
-        print("No emails to process.")
+        LOGGER.info("No emails to process.")
         return
 
     app = _compile_auto_app()
@@ -127,14 +127,14 @@ async def run_autonomous_processing():
     for email in emails:
         existing_email = await mongo.db[COLLECTIONS['processed_emails']].find_one({"email_id": email["id"]})
         if existing_email:
-            print(f"Skipping already processed email: {email['subject']}")
+            LOGGER.debug(f"Skipping already processed email: {email['subject']}")
             continue
 
         thread_id = str(uuid.uuid4())
         config = {"configurable": {"thread_id": thread_id}}
 
-        print("\n" + "-"*50)
-        print(f"📨 Processing Email: {email['subject']} (from: {email['sender']})")
+        LOGGER.info("-"*50)
+        LOGGER.info(f"Processing Email: {email['subject']} (from: {email['sender']})")
         
         user_input = f"""
         Subject: {email['subject']}
@@ -168,7 +168,7 @@ async def run_autonomous_processing():
                 upsert=True
             )
         except Exception as e:
-            print(f"⚠️ Failed to save processed email to DB: {e}")
+            LOGGER.error(f"Failed to save processed email to DB: {e}")
 
         # Check if graph paused at an interrupt
         source_context = {
@@ -178,20 +178,18 @@ async def run_autonomous_processing():
         was_interrupted = await _check_and_save_interrupt(app, config, source_context)
 
         if was_interrupted:
-            print("📋 Saved to pending items for user review.")
+            LOGGER.info("Saved to pending items for user review.")
         else:
             state_after = await app.aget_state(config)
             final = state_after.values
             status = final.get('workflow_status', 'Unknown')
-            print(f"🏁 Processing status: {status}")
+            LOGGER.info(f"Processing status: {status}")
             if status == 'FINISHED' and final.get('plan'):
-                print("✅ Actions taken.")
+                LOGGER.info("Actions taken.")
             else:
-                print("ℹ️ Ignored/No actions.")
+                LOGGER.info("Ignored/No actions.")
                  
-    print("\n" + "="*80)
-    print("✅ BATCH PROCESSING COMPLETE")
-    print("="*80)
+    LOGGER.info("BATCH PROCESSING COMPLETE")
 
 
 async def resolve_interrupt(interrupt_id: str, user_answer: str) -> dict:
@@ -211,8 +209,8 @@ async def resolve_interrupt(interrupt_id: str, user_answer: str) -> dict:
 
     app = _compile_auto_app()
 
-    print(f"▶️ Resolving interrupt {interrupt_id} for thread {thread_id}")
-    print(f"   User answer: {user_answer}")
+    LOGGER.info(f"Resolving interrupt {interrupt_id} for thread {thread_id}")
+    LOGGER.debug(f"User answer: {user_answer}")
 
     await app.ainvoke(Command(resume=user_answer), config)
 

@@ -7,6 +7,7 @@ from arcis.models.agents.state import AgentState
 from arcis.core.llm.prompts import EMAIL_AGENT_PROMPT
 from arcis.core.workflow_manual.tools.email import email_tools
 from arcis.core.utils.token_tracker import save_token_usage
+from arcis.logger import LOGGER
 
 
 async def email_agent_node(state: AgentState) -> AgentState:
@@ -32,7 +33,7 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
     llm_client = LLMFactory.get_client_for_agent("email_agent")
     email_llm = llm_client.bind_tools(email_tools)
     
-    print(f"\n✉️ EMAIL AGENT: Executing - {current_step['description']}")
+    LOGGER.info(f"EMAIL AGENT: Executing - {current_step['description']}")
 
     # Track conversation
     messages = email_prompt.format_messages(
@@ -50,7 +51,7 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
                 content="You have reached the maximum number of tool iterations. "
                         "Do NOT call any more tools. Synthesize a final answer from the information you have gathered so far."
             ))
-            print(f"   ⚠️ EMAIL AGENT: Reached max iterations ({max_iterations}), forcing final answer")
+            LOGGER.warning(f"EMAIL AGENT: Reached max iterations ({max_iterations}), forcing final answer")
             final_response = await llm_client.ainvoke(messages)
             if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
                 await save_token_usage("email_agent", final_response.usage_metadata)
@@ -69,10 +70,10 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
         # Check if agent needs user input
         if email_response.content and "[NEED_INPUT]" in email_response.content:
             question = email_response.content.replace("[NEED_INPUT]", "").strip()
-            print(f"   ❓ EMAIL AGENT needs user input: {question}")
+            LOGGER.info(f"EMAIL AGENT needs user input: {question}")
             user_answer = interrupt(question)
 
-            print(f"   ✅ User provided: {user_answer}")
+            LOGGER.debug(f"User provided: {user_answer}")
             messages.append(email_response)
             messages.append(HumanMessage(content=f"User provided: {user_answer}"))
             email_response = await email_llm.ainvoke(messages)
@@ -83,20 +84,20 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
         # If no tool calls, we are done
         if not email_response.tool_calls:
             tool_output = email_response.content
-            print("EMAIL AGENT(final) : ", tool_output)
+            LOGGER.debug(f"EMAIL AGENT(final) : {tool_output}")
             break
 
         tool_map = {tool.name: tool for tool in email_tools}
         tool_results = []
         
-        print(f"   🔄 Iteration {i+1}: Processing {len(email_response.tool_calls)} tool calls")
+        LOGGER.debug(f"Iteration {i+1}: Processing {len(email_response.tool_calls)} tool calls")
         
         # Execute each tool call
         for tool_call in email_response.tool_calls:
             tool_name = tool_call["name"]
             tool_args = tool_call["args"]
             
-            print(f"   🔧 Calling tool: {tool_name} with args: {tool_args}")
+            LOGGER.debug(f"🔧 Calling tool: {tool_name} with args: {tool_args}")
             
             # Get the tool and invoke it
             if tool_name in tool_map:
@@ -113,7 +114,7 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
                         "result": result
                     })
                     
-                    print(f"   ✅ Tool result: {result}")
+                    LOGGER.debug(f"Tool result: {result}")
                     
                 except Exception as e:
                     error_msg = f"Error executing {tool_name}: {str(e)}"
@@ -121,9 +122,9 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
                         "tool": tool_name,
                         "error": error_msg
                     })
-                    print(f"   ❌ {error_msg}")
+                    LOGGER.error(error_msg)
             else:
-                print(f"   ⚠️ Tool {tool_name} not found")
+                LOGGER.warning(f"Tool {tool_name} not found")
 
         tool_messages = [
             ToolMessage(content=str(r.get('result', r.get('error'))), tool_call_id=tc["id"])
@@ -144,7 +145,7 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
              await save_token_usage("email_agent", final_response.usage_metadata)
 
         tool_output = final_response.content
-        print("EMAIL AGENT(final after loop) : ", tool_output)
+        LOGGER.debug(f"EMAIL AGENT(final after loop) : {tool_output}")
     
     # Accumulate output into shared context so other agents can see it
     updated_context = dict(state.get("context", {}))

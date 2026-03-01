@@ -13,6 +13,7 @@ from arcis.core.workflow_manual.agents.replanner import replanner_node, replanne
 
 from arcis.core.llm.short_memory import checkpointer # mongodb per thread memory
 from arcis.core.llm import memory_extractor
+from arcis.logger import LOGGER
 
 
 def create_workflow() -> StateGraph:
@@ -74,7 +75,7 @@ async def run_workflow(user_input: str, thread_id: str | None):
 
     # Check if graph is paused (resuming from an interrupt)
     if current_state.next:
-        print(f"Resuming workflow for thread {thread_id} with: {user_input}")
+        LOGGER.info(f"Resuming workflow for thread {thread_id} with: {user_input}")
         await app.ainvoke(
             Command(resume=user_input),
             config
@@ -101,7 +102,7 @@ async def run_workflow(user_input: str, thread_id: str | None):
                 "workflow_status": None # for every calls force set not finished (bcz history may set it as finished)
             }
 
-        print(f"User Request: {user_input}")
+        LOGGER.info(f"User Request: {user_input}")
         
         await app.ainvoke(
             payload,
@@ -115,7 +116,7 @@ async def run_workflow(user_input: str, thread_id: str | None):
         for task in state_after.tasks:
             if hasattr(task, 'interrupts') and task.interrupts:
                 question = task.interrupts[0].value
-                print(f"Graph interrupted: {question}")
+                LOGGER.info(f"Graph interrupted: {question}")
                 return {
                     "type": "interrupt",
                     "response": str(question),
@@ -129,7 +130,7 @@ async def run_workflow(user_input: str, thread_id: str | None):
         }
 
     final_state = state_after.values
-    print(final_state)
+    LOGGER.debug(final_state)
 
     # Append the AI's final response as a message so next turn sees it
     final_resp = final_state.get("final_response", "")
@@ -145,6 +146,6 @@ async def run_workflow(user_input: str, thread_id: str | None):
         if conv_messages:
             await memory_extractor.extract_and_store(conv_messages, source="manual_chat")
     except Exception as e:
-        print(f"Memory extraction skipped: {e}")
+        LOGGER.warning(f"Memory extraction skipped: {e}")
     
     return final_state

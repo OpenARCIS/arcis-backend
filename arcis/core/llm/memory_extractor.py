@@ -8,6 +8,8 @@ from arcis.core.utils.token_tracker import save_token_usage
 from arcis.models.agents.response import MemoryExtractionModel
 
 from arcis.utils.text import format_messages
+from arcis.logger import LOGGER
+
 
 
 
@@ -46,13 +48,13 @@ async def extract_and_store(messages: list, source: str = "conversation") -> lis
         if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
             await save_token_usage("memory_extractor", response["raw"].usage_metadata)
         if not parsed or not parsed.facts:
-            print("No key facts extracted from conversation")
+            LOGGER.info("No key facts extracted from conversation")
             return []
             
         facts = [{"text": f.text, "category": f.category} for f in parsed.facts]
         
     except Exception as e:
-        print(f"Memory extraction failed: {e}")
+        LOGGER.error(f"Memory extraction failed: {e}")
         return []
 
     unique_items = []
@@ -72,17 +74,17 @@ async def extract_and_store(messages: list, source: str = "conversation") -> lis
                 "source": source,
             })
         else:
-            print(f"Skipping duplicate fact (score {existing[0]['score']:.2f}): {fact['text']}")
+            LOGGER.debug(f"Skipping duplicate fact (score {existing[0]['score']:.2f}): {fact['text']}")
 
     if not unique_items:
-        print("No new unique facts to store.")
+        LOGGER.debug("No new unique facts to store.")
         return facts
 
     try:
         long_memory.store_many(unique_items)
-        print(f"Extracted and stored {len(unique_items)} new facts from conversation")
+        LOGGER.info(f"Extracted and stored {len(unique_items)} new facts from conversation")
     except Exception as e:
-        print(f"Failed to store extracted memories: {e}")
+        LOGGER.error(f"Failed to store extracted memories: {e}")
 
     return facts
 

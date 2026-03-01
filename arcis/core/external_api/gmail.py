@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 
 from arcis.core.external_api.google import GoogleAPI, NotDoneGoogleAuthentication
 from arcis.utils.text import clean_text, clean_urls
+from arcis.logger import LOGGER
 
 
 
@@ -18,7 +19,7 @@ class GmailAPI(GoogleAPI):
         try:
             self.user_cred = await GoogleAPI.load_user_creds()
         except NotDoneGoogleAuthentication:
-            print("GMAIL: Failed to load User credentials")
+            LOGGER.error("GMAIL: Failed to load User credentials")
             self.user_cred = None
 
 
@@ -119,12 +120,12 @@ class GmailAPI(GoogleAPI):
                         #await mark_message_as_processed(msg_id)
                 
                 else:
-                    print("No new mail.")
+                    LOGGER.info("No new mail.")
             
             return email_list
 
         except Exception as e:
-            print(f"Error during polling: {e}")
+            LOGGER.error(f"Error during polling: {e}")
             return []
 
 
@@ -188,7 +189,7 @@ class GmailAPI(GoogleAPI):
                 )
                 return sent_message
             except Exception as e:
-                print(f"An error occurred sending email: {e}")
+                LOGGER.error(f"An error occurred sending email: {e}")
                 return None
 
 
@@ -208,10 +209,10 @@ class GmailAPI(GoogleAPI):
                 draft = await aiogoogle.as_user(
                     gmail.users.drafts.create(userId='me', json=message_payload)
                 )
-                print(f"Draft created with ID: {draft['id']}")
+                LOGGER.info(f"Draft created with ID: {draft['id']}")
                 return draft
             except Exception as e:
-                print(f"An error occurred creating draft: {e}")
+                LOGGER.error(f"An error occurred creating draft: {e}")
                 return None
 
 
