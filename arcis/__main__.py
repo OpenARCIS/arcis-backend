@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
 from arcis import Config
+from arcis.logger import LOGGER
 
 from arcis.router.gmail import gmail_router
 from arcis.router.settings import settings_router
@@ -25,7 +26,8 @@ from arcis.core.external_api.gmail import gmail_api
 from arcis.core.tts.tts_manager import tts_manager
 
 from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
-from arcis.logger import LOGGER
+
+from arcis.tgclient import tg_arcis
 
 
 async def check_emails_cron():
@@ -55,6 +57,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         LOGGER.error(f"TTS Manager initialization failed: {e}")
     
+    from arcis.tgclient import tg_arcis
+    if tg_arcis:
+        try:
+            await tg_arcis.start()
+        except Exception as e:
+            LOGGER.error(f"Failed to start Telegram Bot: {e}")
+
     cron_task = asyncio.create_task(check_emails_cron())
     
     yield
@@ -65,6 +74,12 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         pass
         
+    if aio:
+        try:
+            await aio.stop()
+        except Exception as e:
+            LOGGER.error(f"Failed to stop Telegram Bot: {e}")
+
     await mongo.disconnect()
 
 
