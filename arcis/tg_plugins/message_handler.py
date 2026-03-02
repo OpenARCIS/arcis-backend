@@ -6,7 +6,6 @@ from arcis.logger import LOGGER
 from arcis.core.workflow_manual.manual_flow import run_workflow
 from arcis.core.workflow_auto.auto_flow import resolve_interrupt
 from arcis.core.llm.short_memory import db_client
-from arcis.utils.markdown_utils import escape_markdown
 
 
 @Client.on_message(filters.text & filters.private)
@@ -46,8 +45,7 @@ async def handle_direct_message(client: Client, message: Message):
                 response_text = f"An error occurred resolving the interrupt: {e}"
                 
             try:
-                safe_response = escape_markdown(response_text)
-                await message.reply_text(safe_response, parse_mode=enums.ParseMode.MARKDOWN)
+                await message.reply_text(response_text, parse_mode=enums.ParseMode.MARKDOWN)
             except Exception as e:
                 LOGGER.error(f"Error sending message back with markdown, trying without: {e}")
                 await message.reply_text(response_text)
@@ -67,8 +65,7 @@ async def handle_direct_message(client: Client, message: Message):
         response_text = "An error occurred while processing your request."
 
     try:
-        safe_response = escape_markdown(response_text)
-        await message.reply_text(safe_response, parse_mode=enums.ParseMode.MARKDOWN)
+        await message.reply_text(response_text, parse_mode=enums.ParseMode.MARKDOWN)
     except Exception as e:
          LOGGER.error(f"Error sending message back with markdown, trying without: {e}")
          await message.reply_text(response_text)
