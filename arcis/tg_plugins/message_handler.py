@@ -6,10 +6,11 @@ from arcis.logger import LOGGER
 from arcis.core.workflow_manual.manual_flow import run_workflow
 from arcis.utils.markdown_utils import escape_markdown
 
+
 @Client.on_message(filters.text & filters.private)
 async def handle_direct_message(client: Client, message: Message):
     if str(message.from_user.id) != Config.ALLOWED_TG_USER_ID:
-        LOGGER.warning(f"Unauthorized access attempt from user ID: {message.from_user.id}")
+        LOGGER.warning(f"Unauthorized access attempt from user ID: {message.from_user.id} vs allowed {Config.ALLOWED_TG_USER_ID}")
         await message.reply_text("Unauthorized access.")
         return
 

@@ -29,7 +29,15 @@ class Bot(Client):
         LOGGER.info('ARCIS - Telegram Client : Exited Successfully ! Bye..........')
 
 tg_arcis = None
-if Config.TELEGRAM_API_ID and Config.TELEGRAM_API_HASH and Config.TG_BOT_TOKEN:
-    tg_arcis = Bot()
-else:
-    LOGGER.warning("Telegram Client configuration missing. Telegram bot will not be initialized.")
+
+def get_tg_client():
+    global tg_arcis
+    if tg_arcis is not None:
+        return tg_arcis
+        
+    if Config.TELEGRAM_API_ID and Config.TELEGRAM_API_HASH and Config.TG_BOT_TOKEN:
+        tg_arcis = Bot()
+    else:
+        LOGGER.warning("Telegram Client configuration missing. Telegram bot will not be initialized.")
+        
+    return tg_arcis

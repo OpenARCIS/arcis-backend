@@ -27,8 +27,6 @@ from arcis.core.tts.tts_manager import tts_manager
 
 from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
 
-from arcis.tgclient import tg_arcis
-
 
 async def check_emails_cron():
     try:
@@ -38,6 +36,7 @@ async def check_emails_cron():
         return True
     except asyncio.CancelledError:
         pass
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -57,7 +56,8 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         LOGGER.error(f"TTS Manager initialization failed: {e}")
     
-    from arcis.tgclient import tg_arcis
+    from arcis.tgclient import get_tg_client
+    tg_arcis = get_tg_client()
     if tg_arcis:
         try:
             await tg_arcis.start()
@@ -74,9 +74,9 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         pass
         
-    if aio:
+    if tg_arcis:
         try:
-            await aio.stop()
+            await tg_arcis.stop()
         except Exception as e:
             LOGGER.error(f"Failed to stop Telegram Bot: {e}")
 

@@ -19,3 +19,5 @@ qdrant-client
 fastembed
 pocket-tts
 soundfile
+pyrofork
+TgCrypto-pyrofork
