@@ -19,6 +19,7 @@ from arcis.core.llm.short_memory import checkpointer
 from arcis.core.llm.pending_interrupt import save_pending, get_pending_by_id, resolve_pending
 
 from arcis.database.mongo.connection import mongo, COLLECTIONS
+from arcis.tg_plugins.tg_notify import notify_action, notify_interrupt
 from arcis.logger import LOGGER
 
 def create_auto_workflow() -> StateGraph:
@@ -81,10 +82,10 @@ def _compile_auto_app():
     return workflow.compile(checkpointer=checkpointer)
 
 
-async def _check_and_save_interrupt(app, config, source_context: dict) -> bool:
+async def _check_and_save_interrupt(app, config, source_context: dict) -> str | None:
     """
     Check if the graph hit an interrupt after ainvoke.
-    If so, save it to pending_interrupts and return True.
+    If so, save it to pending_interrupts and return the interrupt ID.
     """
     state_after = await app.aget_state(config)
     thread_id = config["configurable"]["thread_id"]
@@ -94,13 +95,11 @@ async def _check_and_save_interrupt(app, config, source_context: dict) -> bool:
             if hasattr(task, 'interrupts') and task.interrupts:
                 question = str(task.interrupts[0].value)
                 LOGGER.info(f"Auto flow interrupted: {question}")
-                save_pending(thread_id, question, source_context)
-                return True
+                return save_pending(thread_id, question, source_context)
         # Fallback
-        save_pending(thread_id, "Agent needs more information.", source_context)
-        return True
+        return save_pending(thread_id, "Agent needs more information.", source_context)
 
-    return False
+    return None
 
 
 async def run_autonomous_processing():
@@ -137,11 +136,11 @@ async def run_autonomous_processing():
         LOGGER.info(f"Processing Email: {email['subject']} (from: {email['sender']})")
         
         user_input = f"""
-        Subject: {email['subject']}
-        From: {email['sender']}
-        Body:
-        {email['body']}
-        """
+Subject: {email['subject']}
+From: {email['sender']}
+Body:
+{email['body']}
+"""
 
         initial_state: AgentState = {
             "input": user_input,
@@ -175,10 +174,25 @@ async def run_autonomous_processing():
             "subject": email.get("subject", ""),
             "sender": email.get("sender", ""),
         }
-        was_interrupted = await _check_and_save_interrupt(app, config, source_context)
+        interrupt_id = await _check_and_save_interrupt(app, config, source_context)
 
-        if was_interrupted:
+        if interrupt_id:
             LOGGER.info("Saved to pending items for user review.")
+            # Notify user about the interrupt via Telegram
+            state_after = await app.aget_state(config)
+            question = "Agent needs more information."
+            for task in state_after.tasks:
+                if hasattr(task, 'interrupts') and task.interrupts:
+                    question = str(task.interrupts[0].value)
+                    break
+            
+            await notify_interrupt(
+                interrupt_id,
+                f"🤖 Auto Flow — Email: \"{email.get('subject', 'N/A')}\"\n"
+                f"From: {email.get('sender', 'Unknown')}\n\n"
+                f"⏸️ Needs your input:\n{question}\n\n"
+                f"_Reply to this message to answer._"
+            )
         else:
             state_after = await app.aget_state(config)
             final = state_after.values
@@ -186,6 +200,17 @@ async def run_autonomous_processing():
             LOGGER.info(f"Processing status: {status}")
             if status == 'FINISHED' and final.get('plan'):
                 LOGGER.info("Actions taken.")
+                # Build summary of completed steps
+                completed = [s for s in final['plan'] if s.get('status') == 'completed']
+                steps_summary = "\n".join(
+                    f"  • {s['description']}" for s in completed
+                ) if completed else "  • (plan executed)"
+                await notify_action(
+                    f"🤖 Auto Flow — Email: \"{email.get('subject', 'N/A')}\"\n"
+                    f"From: {email.get('sender', 'Unknown')}\n\n"
+                    f"✅ Actions taken:\n{steps_summary}\n\n"
+                    f"📝 {final.get('final_response', '')}"
+                )
             else:
                 LOGGER.info("Ignored/No actions.")
                  

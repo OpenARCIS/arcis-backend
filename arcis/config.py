@@ -34,3 +34,10 @@ class Config:
 
     # TTS Config
     TTS_DEFAULT_VOICE = getenv("TTS_DEFAULT_VOICE", "alba")
+
+    # Telegram Config
+    TELEGRAM_API_ID = getenv("TELEGRAM_API_ID")
+    TELEGRAM_API_HASH = getenv("TELEGRAM_API_HASH")
+    TG_BOT_TOKEN = getenv("TG_BOT_TOKEN")
+    ALLOWED_TG_USER_ID = getenv("ALLOWED_TG_USER_ID")
+    WORK_DIR = getenv("WORK_DIR", "./")

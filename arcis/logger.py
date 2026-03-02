@@ -1,9 +1,9 @@
 import os
 import logging
 import inspect
-from pathlib import Path
 
-log_file_path = "./arcis/logs/arcis.log"
+log_file_path = "./arcis/arcis.log"
+
 
 class EndpointFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
