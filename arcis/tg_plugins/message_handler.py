@@ -33,7 +33,7 @@ async def handle_direct_message(client: Client, message: Message):
 
     try:
         safe_response = escape_markdown(response_text)
-        await message.reply_text(safe_response, parse_mode=enums.ParseMode.MARKDOWN_V2)
+        await message.reply_text(safe_response, parse_mode=enums.ParseMode.MARKDOWN)
     except Exception as e:
          LOGGER.error(f"Error sending message back with markdown, trying without: {e}")
          await message.reply_text(response_text)

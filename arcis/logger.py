@@ -1,7 +1,15 @@
 import os
 import logging
 import inspect
+import warnings
 from pathlib import Path
+
+# Suppress harmless Pydantic serialization warning from LangChain
+warnings.filterwarnings(
+    "ignore",
+    message=".*PydanticSerializationUnexpectedValue.*",
+    category=UserWarning,
+)
 
 log_file_path = "./arcis/arcis.log"
 
