@@ -25,6 +25,7 @@ from arcis.core.external_api.gmail import gmail_api
 from arcis.core.tts.tts_manager import tts_manager
 
 from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
+from arcis.logger import LOGGER
 
 
 async def check_emails_cron():
@@ -45,14 +46,14 @@ async def lifespan(app: FastAPI):
     try:
         long_memory.init(mode=Config.EMBEDDING_MODE)
     except Exception as e:
-        print(f"⚠️ Long-term memory init failed (non-fatal): {e}")
+        LOGGER.error(f"Long-term memory init failed (non-fatal): {e}")
         
 
     try:
         loop = asyncio.get_event_loop() # Avoid blocking event loop for slow model loads
         await loop.run_in_executor(None, tts_manager.initialize, Config.TTS_DEFAULT_VOICE) 
     except Exception as e:
-        print(f"⚠️ TTS Manager initialization failed: {e}")
+        LOGGER.error(f"TTS Manager initialization failed: {e}")
     
     cron_task = asyncio.create_task(check_emails_cron())
     

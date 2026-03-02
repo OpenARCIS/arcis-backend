@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 from arcis.database.mongo.connection import mongo, COLLECTIONS
+from arcis.logger import LOGGER
+
 
 async def save_token_usage(agent_name: str, usage_metadata: dict, model_name: str = None):
     """
@@ -37,4 +39,4 @@ async def save_token_usage(agent_name: str, usage_metadata: dict, model_name: st
         if mongo.db is not None:
              await mongo.db[COLLECTIONS['token_usage']].insert_one(record)
     except Exception as e:
-        print(f"⚠️ Failed to save token usage for {agent_name}: {e}")
+        LOGGER.error(f"Failed to save token usage for {agent_name}: {e}")

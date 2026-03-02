@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from arcis.database.mongo.connection import mongo, COLLECTIONS
+from arcis.logger import LOGGER
 
 user_status_router = APIRouter()
 
@@ -26,5 +27,5 @@ async def get_user_status():
         return latest_emotion.get("emotions", {})
 
     except Exception as e:
-        print(f"Error fetching user status: {e}")
+        LOGGER.error(f"Error fetching user status: {e}")
         raise HTTPException(status_code=500, detail=str(e))

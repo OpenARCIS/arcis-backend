@@ -4,6 +4,7 @@ from arcis.models.agents.state import AgentState
 from arcis.models.agents.response import PlanModel
 from arcis.core.llm.prompts import AUTO_ANALYZER_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
+from arcis.logger import LOGGER
 
 
 async def analyzer_node(state: AgentState) -> AgentState:
@@ -12,9 +13,8 @@ async def analyzer_node(state: AgentState) -> AgentState:
     """
     email_content = state["input"]
     
-    print("\n" + "="*80)
-    print("📧 ANALYZER: Analyzing incoming message...")
-    # print(f"   Content Preview: {email_content[:100]}...")
+    LOGGER.info("ANALYZER: Analyzing incoming message...")
+    # LOGGER.debug(f"   Content Preview: {email_content[:100]}...")
     
     analyzer_prompt = ChatPromptTemplate.from_messages([
         ("system", AUTO_ANALYZER_PROMPT),
@@ -35,7 +35,7 @@ async def analyzer_node(state: AgentState) -> AgentState:
             await save_token_usage("analyzer", response["raw"].usage_metadata)
         
         if not plan_response.steps:
-            print("   🚫 Msg ignored (Irrelevant/Spam)")
+            LOGGER.info("Msg ignored (Irrelevant/Spam)")
             return {
                 **state,
                 "plan": [],
@@ -53,9 +53,9 @@ async def analyzer_node(state: AgentState) -> AgentState:
                 "status": "pending"
             })
             
-        print(f"   ✅ Plan Created with {len(new_plan)} steps.")
+        LOGGER.info(f"Plan Created with {len(new_plan)} steps.")
         for step in new_plan:
-             print(f"      - {step['id']}: {step['description']} ({step['assigned_agent']})")
+             LOGGER.info(f"   - {step['id']}: {step['description']} ({step['assigned_agent']})")
 
         return {
             **state,
@@ -65,7 +65,7 @@ async def analyzer_node(state: AgentState) -> AgentState:
         }
         
     except Exception as e:
-        print(f"   ❌ Error in analysis: {e}")
+        LOGGER.error(f"Error in analysis: {e}")
         return {
             **state,
             "workflow_status": "FAILED",

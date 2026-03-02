@@ -6,6 +6,7 @@ from arcis.models.agents.state import AgentState
 from arcis.models.agents.response import ReplannerResponse
 from arcis.core.llm.prompts import REPLANNER_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
+from arcis.logger import LOGGER
 
 
 def _format_history(messages: list, max_turns: int = 10) -> str:
@@ -110,12 +111,11 @@ Evaluate the execution and determine next actions.""")
         for i, step in enumerate(updated_plan):
             step["id"] = i + 1
     
-    print(f"\n🔄 REPLANNER: Status = {response.status}")
+    LOGGER.info(f"REPLANNER: Status = {response.status}")
     if current_step:
-        print(f"   Step {current_step['id']} marked as: {response.step_status}")
+        LOGGER.info(f"Step {current_step['id']} marked as: {response.step_status}")
     if response.new_steps:
-        print(f"   Added {len(response.new_steps)} new steps")
-    print()
+        LOGGER.info(f"Added {len(response.new_steps)} new steps")
     
     return {
         **state,

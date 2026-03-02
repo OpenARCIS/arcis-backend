@@ -8,6 +8,8 @@ import tempfile
 import scipy.io.wavfile
 
 from pocket_tts import TTSModel
+from arcis.logger import LOGGER
+
 
 
 class TTSManager:
@@ -19,20 +21,20 @@ class TTSManager:
 
     def initialize(self, default_voice: str = "alba"):
         try:
-            print("[INFO] Loading TTS model...")
+            LOGGER.info("Loading TTS model...")
             self.tts_model = TTSModel.load_model()
-            print(f"[INFO] TTS model loaded successfully (sample rate: {self.tts_model.sample_rate}Hz)")
+            LOGGER.info(f"TTS model loaded successfully (sample rate: {self.tts_model.sample_rate}Hz)")
 
             if default_voice:
-                print(f"[INFO] Pre-loading default voice state: {default_voice}")
+                LOGGER.info(f"Pre-loading default voice state: {default_voice}")
                 self.default_voice_state = self.tts_model.get_state_for_audio_prompt(default_voice)
                 self.voice_states["default"] = self.default_voice_state
-                print("[INFO] Default voice state loaded successfully.")
+                LOGGER.info("Default voice state loaded successfully.")
             else:
-                print("[WARNING] No default voice provided. First synthesis might lag.")
+                LOGGER.warning("No default voice provided. First synthesis might lag.")
         except Exception as e:
             error_msg = str(e)
-            print(f"[ERROR] Failed to initialize TTS: {error_msg}")
+            LOGGER.error(f"Failed to initialize TTS: {error_msg}")
 
 
     def update_voice_state_from_bytes(self, voice_id: str, wav_bytes: bytes):
@@ -45,12 +47,12 @@ class TTSManager:
                 temp_wav.write(wav_bytes)
                 temp_path = temp_wav.name
                 
-            print(f"[INFO] Parsing new voice state for {voice_id}")
+            LOGGER.info(f"Parsing new voice state for {voice_id}")
             state = self.tts_model.get_state_for_audio_prompt(temp_path)
             self.voice_states[voice_id] = state
             return True
         except Exception as e:
-            print(f"[ERROR] Failed to extract voice state: {e}")
+            LOGGER.error(f"Failed to extract voice state: {e}")
             raise e
         finally:
             if 'temp_path' in locals() and os.path.exists(temp_path):
@@ -72,7 +74,7 @@ class TTSManager:
             audio_bytes = wav_buffer.read()
             return base64.b64encode(audio_bytes).decode()
         except Exception as e:
-            print(f"[WARNING] Failed to generate audio for sentence '{sentence[:20]}...': {e}")
+            LOGGER.warning(f"Failed to generate audio for sentence '{sentence[:20]}...': {e}")
             return None
 
 
@@ -109,7 +111,7 @@ class TTSManager:
                     if audio_data:
                         yield f"data: {json.dumps({'type': 'audio', 'data': audio_data, 'format': 'wav', 'chunk': idx})}\n\n"
                 except Exception as e:
-                    print(f"[ERROR] TTS stream failed on chunk {idx}: {e}")
+                    LOGGER.error(f"TTS stream failed on chunk {idx}: {e}")
 
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 

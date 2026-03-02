@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime
 
-from arcis.core.external_api.calendar import calendar_wrapper
+from arcis.core.external_api.internal_calendar import calendar_wrapper
 
 calendar_router = APIRouter()
 

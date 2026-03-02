@@ -1,6 +1,7 @@
 import os
 from os import getenv
 from dotenv import load_dotenv
+from arcis.logger import LOGGER
 
 if not os.environ.get("ENV"):
     load_dotenv('.env', override=True)
@@ -8,7 +9,7 @@ if not os.environ.get("ENV"):
 class Config:
     DATABASE_URL = getenv("DATABASE_URL")
     if not DATABASE_URL:
-        print("CORE : Essential Configs (DATABASE_URL) are missing")
+        LOGGER.error("CORE : Essential Configs (DATABASE_URL) are missing")
         exit(1)
 
     DATABASE_NAME = getenv("DATABASE_NAME", 'arcis_db')

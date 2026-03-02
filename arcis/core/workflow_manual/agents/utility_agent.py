@@ -6,6 +6,7 @@ from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState
 from arcis.core.llm.prompts import UTILITY_AGENT_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
+from arcis.logger import LOGGER
 
 from arcis.core.workflow_manual.tools.web_search import web_search
 from arcis.core.workflow_manual.tools.calendar import calendar_tools
@@ -38,7 +39,7 @@ Execute this task and gather necessary information.""")
     llm_client = LLMFactory.get_client_for_agent("utility_agent")
     utility_llm = llm_client.bind_tools(utility_tools)
     
-    print(f"\n🔧 UTILITY AGENT: Executing - {current_step['description']}")
+    LOGGER.info(f"UTILITY AGENT: Executing - {current_step['description']}")
     
     # Track the ongoing conversation
     messages = utility_prompt.format_messages(
@@ -56,7 +57,7 @@ Execute this task and gather necessary information.""")
                 content="You have reached the maximum number of tool iterations. "
                         "Do NOT call any more tools. Synthesize a final answer from the information you have gathered so far."
             ))
-            print(f"   ⚠️ UTILITY AGENT: Reached max iterations ({max_iterations}), forcing final answer")
+            LOGGER.warning(f"UTILITY AGENT: Reached max iterations ({max_iterations}), forcing final answer")
             final_response = await llm_client.ainvoke(messages)
             if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
                 await save_token_usage("utility_agent", final_response.usage_metadata)
@@ -75,10 +76,10 @@ Execute this task and gather necessary information.""")
         # Check if agent needs user input
         if response.content and "[NEED_INPUT]" in response.content:
             question = response.content.replace("[NEED_INPUT]", "").strip()
-            print(f"   ❓ UTILITY AGENT needs user input: {question}")
+            LOGGER.info(f"UTILITY AGENT needs user input: {question}")
             user_answer = interrupt(question)
 
-            print(f"   ✅ User provided: {user_answer}")
+            LOGGER.debug(f"User provided: {user_answer}")
             messages.append(response)
             messages.append(HumanMessage(content=f"User provided: {user_answer}"))
             response = await utility_llm.ainvoke(messages)
@@ -95,13 +96,13 @@ Execute this task and gather necessary information.""")
         tool_map = {tool.name: tool for tool in utility_tools}
         tool_results = []
         
-        print(f"   🔄 Iteration {i+1}: Processing {len(response.tool_calls)} tool calls")
+        LOGGER.debug(f"Iteration {i+1}: Processing {len(response.tool_calls)} tool calls")
         
         for tool_call in response.tool_calls:
             tool_name = tool_call["name"]
             tool_args = tool_call["args"]
             
-            print(f"   🔧 Calling tool: {tool_name} with args: {tool_args}")
+            LOGGER.debug(f"Calling tool: {tool_name} with args: {tool_args}")
             
             if tool_name in tool_map:
                 tool = tool_map[tool_name]
@@ -115,16 +116,16 @@ Execute this task and gather necessary information.""")
                         "tool": tool_name,
                         "result": result
                     })
-                    print(f"   ✅ Tool result: {result}")
+                    LOGGER.debug(f"Tool result: {result}")
                 except Exception as e:
                     error_msg = f"Error executing {tool_name}: {str(e)}"
                     tool_results.append({
                         "tool": tool_name,
                         "error": error_msg
                     })
-                    print(f"   ❌ {error_msg}")
+                    LOGGER.error(error_msg)
             else:
-                print(f"   ⚠️ Tool {tool_name} not found")
+                LOGGER.warning(f"Tool {tool_name} not found")
 
         # Create tool messages
         from langchain_core.messages import ToolMessage
@@ -148,7 +149,7 @@ Execute this task and gather necessary information.""")
 
         tool_output = final_response.content
 
-    print(f"   Result: {tool_output}\n")
+    LOGGER.debug(f"Result: {tool_output}")
     
     # Accumulate output into shared context so other agents can see it
     updated_context = dict(state.get("context", {}))

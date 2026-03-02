@@ -8,6 +8,7 @@ from arcis.models.agents.response import PlanModel
 from arcis.core.llm.prompts import PLANNER_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
 from arcis.core.llm.long_memory import long_memory
+from arcis.logger import LOGGER
 
 
 def _format_history(messages: list, max_turns: int = 10) -> str:
@@ -46,9 +47,9 @@ async def planner_node(state: AgentState) -> AgentState:
             memories = long_memory.search(state["input"], top_k=5)
             long_term_context = _format_memories(memories)
             if long_term_context:
-                print(f"🧠 Long-term memory: found {len(memories)} relevant memories")
+                LOGGER.info(f"Long-term memory: found {len(memories)} relevant memories")
     except Exception as e:
-        print(f"⚠️ Long-term memory lookup failed: {e}")
+        LOGGER.warning(f"Long-term memory lookup failed: {e}")
     
     planner_prompt = ChatPromptTemplate.from_messages([
         ("system", PLANNER_PROMPT),
@@ -82,10 +83,10 @@ Generate a detailed execution plan.""")
 
     # Short-circuit for simple conversational messages
     if plan_response.is_conversational:
-        print(f"\n{'='*60}")
-        print("💬 PLANNER: Conversational message detected — skipping agent loop")
-        print(f"   Response: {plan_response.direct_response}")
-        print(f"{'='*60}\n")
+        LOGGER.info("="*60)
+        LOGGER.info("PLANNER: Conversational message detected — skipping agent loop")
+        LOGGER.debug(f"Response: {plan_response.direct_response}")
+        LOGGER.info("="*60)
         return {
             **state,
             "plan": [],
@@ -105,11 +106,11 @@ Generate a detailed execution plan.""")
         for idx, step in enumerate(plan_response.steps)
     ]
     
-    print(f"\n{'='*60}")
-    print(f"📋 PLANNER: Generated {len(plan_steps)} steps")
+    LOGGER.info("="*60)
+    LOGGER.info(f"PLANNER: Generated {len(plan_steps)} steps")
     for step in plan_steps:
-        print(f"  {step['id']}. [{step['assigned_agent']}] {step['description']}")
-    print(f"{'='*60}\n")
+        LOGGER.info(f"  {step['id']}. [{step['assigned_agent']}] {step['description']}")
+    LOGGER.info("="*60)
     
     # Inject long-term memories into context so agents can use them
     ctx = {}
