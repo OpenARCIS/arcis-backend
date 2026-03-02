@@ -4,6 +4,8 @@ from pyrogram.types import Message
 from arcis.config import Config
 from arcis.logger import LOGGER
 from arcis.core.workflow_manual.manual_flow import run_workflow
+from arcis.core.workflow_auto.auto_flow import resolve_interrupt
+from arcis.core.llm.short_memory import db_client
 from arcis.utils.markdown_utils import escape_markdown
 
 
@@ -19,6 +21,39 @@ async def handle_direct_message(client: Client, message: Message):
 
     await client.send_chat_action(chat_id=message.chat.id, action=enums.ChatAction.TYPING)
 
+    # Check if this is a reply to an auto-flow interrupt
+    if message.reply_to_message_id:
+        db = db_client['arcis_short_memory']
+        mapping = db['tg_interrupt_mappings'].find_one({
+            "message_id": message.reply_to_message_id,
+            "chat_id": message.chat.id
+        })
+        
+        if mapping:
+            LOGGER.info(f"Detected reply to auto flow interrupt: {mapping['interrupt_id']}")
+            try:
+                result = await resolve_interrupt(mapping['interrupt_id'], user_input)
+                # Cleanup the mapping so it isn't used again
+                db['tg_interrupt_mappings'].delete_one({"_id": mapping['_id']})
+                
+                if result.get("status") == "interrupted_again":
+                    response_text = result.get("message", "More information needed.")
+                else:
+                    status_text = "✅ Task completed." if result.get("workflow_status") == "FINISHED" else "Resumed workflow."
+                    response_text = f"{status_text}\n\n📝 {result.get('message', '')}"
+            except Exception as e:
+                LOGGER.error(f"Error resolving interrupt: {e}")
+                response_text = f"An error occurred resolving the interrupt: {e}"
+                
+            try:
+                safe_response = escape_markdown(response_text)
+                await message.reply_text(safe_response, parse_mode=enums.ParseMode.MARKDOWN)
+            except Exception as e:
+                LOGGER.error(f"Error sending message back with markdown, trying without: {e}")
+                await message.reply_text(response_text)
+            return
+
+    # Normal manual flow processing
     try:
         final_state = await run_workflow(user_input=user_input, thread_id=thread_id)
         
