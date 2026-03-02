@@ -19,6 +19,7 @@ from arcis.core.llm.short_memory import checkpointer
 from arcis.core.llm.pending_interrupt import save_pending, get_pending_by_id, resolve_pending
 
 from arcis.database.mongo.connection import mongo, COLLECTIONS
+from arcis.tg_notify import notify_action
 from arcis.logger import LOGGER
 
 def create_auto_workflow() -> StateGraph:
@@ -179,6 +180,18 @@ async def run_autonomous_processing():
 
         if was_interrupted:
             LOGGER.info("Saved to pending items for user review.")
+            # Notify user about the interrupt via Telegram
+            state_after = await app.aget_state(config)
+            question = "Agent needs more information."
+            for task in state_after.tasks:
+                if hasattr(task, 'interrupts') and task.interrupts:
+                    question = str(task.interrupts[0].value)
+                    break
+            await notify_action(
+                f"🤖 Auto Flow — Email: \"{email.get('subject', 'N/A')}\"\n"
+                f"From: {email.get('sender', 'Unknown')}\n\n"
+                f"⏸️ Needs your input:\n{question}"
+            )
         else:
             state_after = await app.aget_state(config)
             final = state_after.values
@@ -186,6 +199,17 @@ async def run_autonomous_processing():
             LOGGER.info(f"Processing status: {status}")
             if status == 'FINISHED' and final.get('plan'):
                 LOGGER.info("Actions taken.")
+                # Build summary of completed steps
+                completed = [s for s in final['plan'] if s.get('status') == 'completed']
+                steps_summary = "\n".join(
+                    f"  • {s['description']}" for s in completed
+                ) if completed else "  • (plan executed)"
+                await notify_action(
+                    f"🤖 Auto Flow — Email: \"{email.get('subject', 'N/A')}\"\n"
+                    f"From: {email.get('sender', 'Unknown')}\n\n"
+                    f"✅ Actions taken:\n{steps_summary}\n\n"
+                    f"📝 {final.get('final_response', '')}"
+                )
             else:
                 LOGGER.info("Ignored/No actions.")
                  
