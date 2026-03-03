@@ -1,5 +1,6 @@
 import asyncio
 import uvicorn
+import warnings
 
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
@@ -26,6 +27,8 @@ from arcis.core.external_api.gmail import gmail_api
 from arcis.core.tts.tts_manager import tts_manager
 
 from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
+
+warnings.filterwarnings("ignore", message="Pydantic serializer warnings") # because of the usage of raw_response in pydantic models
 
 
 async def check_emails_cron():

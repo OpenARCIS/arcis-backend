@@ -1,7 +1,7 @@
 import uuid
 
-from typing import List
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 
 from .models.chat import ChatRequest, MessageSchema, ThreadPreviewSchema
@@ -9,6 +9,7 @@ from .models.chat import ChatRequest, MessageSchema, ThreadPreviewSchema
 from arcis.core.workflow_manual.manual_flow import run_workflow
 from arcis.core.llm.chat_history import save_message, get_thread_history, get_all_threads
 from arcis.core.tts.tts_manager import tts_manager
+from arcis.core.stt.stt_manager import transcribe_audio
 
 chat_router = APIRouter(prefix="/chat")
 
@@ -104,6 +105,99 @@ async def chat_manual(request: ChatRequest):
             "plan": plan,
             "thread_id": thread_id,
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@chat_router.post("/voice")
+async def chat_voice(
+    file: UploadFile = File(...),
+    thread_id: Optional[str] = Form(None),
+):
+    """
+    Accept an audio file, transcribe it via Groq Whisper, and run the
+    manual workflow — same as POST /chat but with voice input.
+    """
+    try:
+        audio_bytes = await file.read()
+        transcribed_text = await transcribe_audio(
+            audio_bytes, filename=file.filename or "audio.wav"
+        )
+
+        if not thread_id:
+            thread_id = str(uuid.uuid4())
+
+        save_message(thread_id, "human", transcribed_text)
+        result = await run_workflow(transcribed_text, thread_id)
+
+        if result.get("type") == "interrupt":
+            save_message(thread_id, "interrupt", result["response"])
+            return {
+                "type": "interrupt",
+                "response": result["response"],
+                "transcribed_text": transcribed_text,
+                "thread_id": thread_id,
+            }
+
+        ai_response = result.get("final_response", "")
+        plan = result.get("plan", [])
+        save_message(thread_id, "ai", ai_response, plan)
+
+        return {
+            "type": "ai",
+            "response": ai_response,
+            "plan": plan,
+            "transcribed_text": transcribed_text,
+            "thread_id": thread_id,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@chat_router.post("/voice/stream")
+async def chat_voice_stream(
+    file: UploadFile = File(...),
+    thread_id: Optional[str] = Form(None),
+    voice_id: str = Form("default"),
+):
+    """
+    Accept an audio file, transcribe it via Groq Whisper, run the
+    manual workflow, and stream back TTS audio — same as POST /chat/stream
+    but with voice input.
+    """
+    try:
+        audio_bytes = await file.read()
+        transcribed_text = await transcribe_audio(
+            audio_bytes, filename=file.filename or "audio.wav"
+        )
+
+        if not thread_id:
+            thread_id = str(uuid.uuid4())
+
+        save_message(thread_id, "human", transcribed_text)
+        result = await run_workflow(transcribed_text, thread_id)
+
+        if result.get("type") == "interrupt":
+            save_message(thread_id, "interrupt", result["response"])
+            import json
+
+            async def interrupt_stream():
+                yield f"data: {json.dumps({'type': 'interrupt', 'response': result['response'], 'transcribed_text': transcribed_text, 'thread_id': thread_id})}\n\n"
+
+            return StreamingResponse(interrupt_stream(), media_type="text/event-stream")
+
+        ai_response = result.get("final_response", "")
+        plan = result.get("plan", [])
+        save_message(thread_id, "ai", ai_response, plan)
+
+        return StreamingResponse(
+            tts_manager.stream_text_and_audio(ai_response, voice_id=voice_id),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            },
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

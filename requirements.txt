@@ -21,3 +21,4 @@ pocket-tts
 soundfile
 pyrofork
 TgCrypto-pyrofork
+groq
