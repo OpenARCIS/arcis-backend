@@ -57,14 +57,19 @@ async def connect_mcp_server(name: str,cfg: MCPServerConfig,stack: AsyncExitStac
     """
     Connect to a single MCP server and return the connection with wrapped tools.
     
-    Supports both stdio (command-based) and HTTP (streamable HTTP) transports.
+    Supports stdio, streamable HTTP, and SSE transports.
     """
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
 
     session: ClientSession
 
-    if cfg.command:
+    # Determine transport: explicit or auto-detect
+    transport = cfg.transport
+    if not transport:
+        transport = "stdio" if cfg.command else "streamable_http"
+
+    if transport == "stdio":
         params = StdioServerParameters(
             command=cfg.command,
             args=cfg.args,
@@ -72,7 +77,14 @@ async def connect_mcp_server(name: str,cfg: MCPServerConfig,stack: AsyncExitStac
         )
         read, write = await stack.enter_async_context(stdio_client(params))
 
-    elif cfg.url:
+    elif transport == "sse":
+        from mcp.client.sse import sse_client
+
+        read, write = await stack.enter_async_context(
+            sse_client(cfg.url, headers=cfg.headers or {})
+        )
+
+    elif transport == "streamable_http":
         from mcp.client.streamable_http import streamable_http_client
 
         http_client = await stack.enter_async_context(
@@ -86,7 +98,7 @@ async def connect_mcp_server(name: str,cfg: MCPServerConfig,stack: AsyncExitStac
             streamable_http_client(cfg.url, http_client=http_client)
         )
     else:
-        raise ValueError(f"MCP server '{name}': no command or url configured")
+        raise ValueError(f"MCP server '{name}': unknown transport '{transport}'")
 
     session = await stack.enter_async_context(ClientSession(read, write))
     await session.initialize()
