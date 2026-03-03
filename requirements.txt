@@ -22,3 +22,4 @@ soundfile
 pyrofork
 TgCrypto-pyrofork
 groq
+mcp

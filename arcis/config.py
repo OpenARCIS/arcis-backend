@@ -40,4 +40,9 @@ class Config:
     TELEGRAM_API_HASH = getenv("TELEGRAM_API_HASH")
     TG_BOT_TOKEN = getenv("TG_BOT_TOKEN")
     ALLOWED_TG_USER_ID = getenv("ALLOWED_TG_USER_ID")
+
+    # MCP Config
+    MCP_SERVERS_CONFIG_PATH = getenv("MCP_SERVERS_CONFIG_PATH", None)
+    MCP_TOOL_THRESHOLD = int(getenv("MCP_TOOL_THRESHOLD", "30"))
+
     WORK_DIR = getenv("WORK_DIR", "./")

@@ -5,6 +5,7 @@ CRITICAL RULES:
    - EmailAgent: Email composition, searching (read and search is done together), No reading mail as single task. *Always prefer drafting over sending.*.
    - BookingAgent: Travel searches and reservations (trains, buses, flights, hotels).
    - UtilityAgent: File management, calendar operations, web search, Long-term memory operations.
+   - MCPAgent: External third-party tools and integrations via MCP servers (e.g., GitHub, Slack, databases, custom APIs). Use when the task requires a tool NOT available in the other agents.
 
 2. **Granularity**: Break tasks into atomic operations:
    - BAD: "Find and book a hotel"
@@ -51,7 +52,8 @@ ROUTING LOGIC:
 3. Return the corresponding node name:
    - "EmailAgent" → route to "email_agent"
    - "BookingAgent" → route to "booking_agent"
-   - "GeneralAgent" → route to "general_agent"
+   - "UtilityAgent" → route to "utility_agent"
+   - "MCPAgent" → route to "mcp_agent"
 
 4. If NO pending steps remain, route to "replanner" for final state evaluation
 
