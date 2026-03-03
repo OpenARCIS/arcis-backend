@@ -27,6 +27,7 @@ from arcis.core.external_api.gmail import gmail_api
 from arcis.core.tts.tts_manager import tts_manager
 
 from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
+from arcis.core.mcp.manager import mcp_manager
 
 warnings.filterwarnings("ignore", message="Pydantic serializer warnings") # because of the usage of raw_response in pydantic models
 
@@ -52,6 +53,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         LOGGER.error(f"Long-term memory init failed (non-fatal): {e}")
         
+
+    try:
+        await mcp_manager.init(
+            config_path=Config.MCP_SERVERS_CONFIG_PATH,
+            tool_threshold=Config.MCP_TOOL_THRESHOLD,
+        )
+    except Exception as e:
+        LOGGER.error(f"MCP init failed (non-fatal): {e}")
 
     try:
         loop = asyncio.get_event_loop() # Avoid blocking event loop for slow model loads
@@ -83,6 +92,7 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             LOGGER.error(f"Failed to stop Telegram Bot: {e}")
 
+    await mcp_manager.shutdown()
     await mongo.disconnect()
 
 

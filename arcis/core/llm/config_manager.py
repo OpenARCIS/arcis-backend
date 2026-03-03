@@ -42,6 +42,11 @@ DEFAULT_AGENTS_CONFIG = {
         "model_name": "openai/gpt-oss-120b",
         "temperature": 0.7
     },
+    "mcp_agent": {
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
+        "temperature": 0.5
+    },
     "analyzer": {
         "provider": LLMProvider.GROQ,
         "model_name": "openai/gpt-oss-120b",

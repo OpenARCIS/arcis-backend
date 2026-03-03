@@ -1,0 +1,16 @@
+{
+    "example_filesystem": {
+        "command": "npx",
+        "args": [
+            "-y",
+            "@modelcontextprotocol/server-filesystem",
+            "./"
+        ],
+        "tool_timeout": 30
+    },
+    "example_http_server": {
+        "url": "http://localhost:8080/mcp",
+        "headers": {},
+        "tool_timeout": 60
+    }
+}
