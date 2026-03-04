@@ -3,6 +3,7 @@ from aiogoogle import Aiogoogle
 from datetime import datetime
 
 from arcis.core.external_api.google import SCOPES, GoogleAPI
+from arcis.core.external_api.gmail import gmail_api
 from arcis.database.mongo.connection import mongo, COLLECTIONS
 
 gmail_router = APIRouter()
@@ -57,6 +58,9 @@ async def callback(request: Request):
             upsert=True
         )
 
+        # Reload the credentials into the application global instance
+        await gmail_api.load_creds()
+
         return {"message": "Authentication successful! Credentials saved for test_user."}
 
     except Exception as e:
@@ -83,5 +87,9 @@ async def logout():
         {"username": "test_user"},
         {"$unset": {"gmail_credentials": "", "auth_updated_at": ""}}
     )
+    
+    # Reload the credentials into the application global instance to clear them
+    await gmail_api.load_creds()
+
     return {"message": "Logged out successfully"}
 
