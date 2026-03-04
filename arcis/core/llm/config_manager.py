@@ -15,7 +15,7 @@ DEFAULT_AGENTS_CONFIG = {
     "planner": {
         "provider": LLMProvider.GROQ,
         "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.5
+        "temperature": 0.4
     },
     "email_agent": {
         "provider": LLMProvider.GROQ,
@@ -43,9 +43,9 @@ DEFAULT_AGENTS_CONFIG = {
         "temperature": 0.7
     },
     "mcp_agent": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.5
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "temperature": 0.3
     },
     "analyzer": {
         "provider": LLMProvider.GROQ,
