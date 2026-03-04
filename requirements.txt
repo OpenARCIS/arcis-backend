@@ -23,3 +23,4 @@ pyrofork
 TgCrypto-pyrofork
 groq
 mcp
+langchain-nvidia-ai-endpoints

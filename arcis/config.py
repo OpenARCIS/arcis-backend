@@ -26,6 +26,7 @@ class Config:
     MISTRAL_API_KEY = getenv("MISTRAL_API_KEY")
     CEREBRAS_API_KEY = getenv("CEREBRAS_API_KEY")
     GROQ_API_KEY = getenv("GROQ_API_KEY")
+    NVIDIA_NIM_API_KEY = getenv("NVIDIA_NIM_API_KEY")
 
     # Qdrant (Long-Term Memory)
     QDRANT_URL = getenv("QDRANT_URL", "http://localhost:6333")

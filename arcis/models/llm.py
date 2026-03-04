@@ -12,6 +12,7 @@ class LLMProvider(Enum):
     MISTRAL_AI = "mistral"
     CEREBRAS = "cerebras"
     GROQ = "groq"
+    NVIDIA_NIM = "nvidia_nim"
     
 
 class BaseLLMClient(ABC):
