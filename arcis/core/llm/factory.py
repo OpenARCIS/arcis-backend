@@ -1,6 +1,7 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from langchain_mistralai import ChatMistralAI
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 from arcis.models.errors import InvalidAPIKey
 from arcis.models.llm import LLMProvider
@@ -124,6 +125,24 @@ class LLMFactory:
                 temperature=kwargs.get("temperature", 0.7),
                 api_key=api_key,
                 base_url="https://api.groq.com/openai/v1",
+                max_retries=3,
+                timeout=30,
+            )
+
+        elif provider == LLMProvider.NVIDIA_NIM:
+            # Nvidia NIM uses official LangChain integration
+            api_key = getattr(Config, "NVIDIA_NIM_API_KEY", None) or kwargs.get("api_key")
+            if not api_key:
+                 try:
+                     import os
+                     api_key = os.environ["NVIDIA_NIM_API_KEY"]
+                 except KeyError:
+                    raise InvalidAPIKey("No valid API Key has been provided to run Nvidia NIM")
+            
+            return ChatNVIDIA(
+                model=kwargs.get("model_name", "meta/llama-3.1-8b-instruct"),
+                temperature=kwargs.get("temperature", 0.7),
+                api_key=api_key,
                 max_retries=3,
                 timeout=30,
             )

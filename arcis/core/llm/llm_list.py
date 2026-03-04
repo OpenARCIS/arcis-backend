@@ -547,4 +547,73 @@ ANTHROPIC = {
     }
 }
 
+NVIDIA_NIM = {
+    "meta/llama-3.1-8b-instruct": {
+        "parameters": "8B",
+        "context": "128k",
+        "usage": "Fast lightweight reasoning",
+        "speed": "Fast"
+    },
+    "meta/llama-3.1-70b-instruct": {
+        "parameters": "70B",
+        "context": "128k",
+        "usage": "High-performance general reasoning",
+        "speed": "Moderate"
+    },
+    "meta/llama-3.1-405b-instruct": {
+        "parameters": "405B",
+        "context": "128k",
+        "usage": "Frontier-level open reasoning",
+        "speed": "Slow"
+    },
+    "meta/llama-3.3-70b-instruct": {
+        "parameters": "70B",
+        "context": "128k",
+        "usage": "Latest Llama general intelligence",
+        "speed": "Moderate"
+    },
+    "deepseek-ai/deepseek-r1": {
+        "parameters": "671B (37B active)",
+        "context": "128k",
+        "usage": "SOTA mathematical reasoning",
+        "speed": "Slow"
+    },
+    "mistralai/mistral-large-2-instruct": {
+        "parameters": "123B",
+        "context": "128k",
+        "usage": "Flagship reasoning",
+        "speed": "Moderate"
+    },
+    "mistralai/mistral-7b-instruct-v0.3": {
+        "parameters": "7B",
+        "context": "32k",
+        "usage": "Lightweight general purpose",
+        "speed": "Fast"
+    },
+    "nvidia/nemotron-mini-4b-instruct": {
+        "parameters": "4B",
+        "context": "4k",
+        "usage": "Edge AI & low-latency tasks",
+        "speed": "Ultra-fast"
+    },
+    "nvidia/llama-3.1-nemotron-70b-instruct": {
+        "parameters": "70B",
+        "context": "128k",
+        "usage": "NVIDIA-optimized Llama reasoning",
+        "speed": "Moderate"
+    },
+    "qwen/qwen3.5-397b-a17b": {
+        "parameters": "397B (17B active)",
+        "context": "128k",
+        "usage": "Large-scale MoE reasoning",
+        "speed": "Moderate"
+    },
+    "google/gemma-2-27b-it": {
+        "parameters": "27B",
+        "context": "8k",
+        "usage": "General multimodal chat",
+        "speed": "Fast"
+    },
+}
+
 OLLAMA = {}
