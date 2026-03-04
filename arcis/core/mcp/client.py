@@ -132,6 +132,8 @@ def _create_langchain_tool(session, server_name: str, tool_def, tool_timeout: in
 
     async def _arun(**kwargs: Any) -> str:
         """Execute the MCP tool call."""
+        # Filter out None values to prevent sending explicit nulls for optional arguments
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
         try:
             result = await asyncio.wait_for(
                 session.call_tool(original_name, arguments=kwargs),
