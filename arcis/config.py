@@ -46,3 +46,7 @@ class Config:
     MCP_TOOL_THRESHOLD = int(getenv("MCP_TOOL_THRESHOLD", "30"))
 
     WORK_DIR = getenv("WORK_DIR", "./")
+
+    # Simple Auth config
+    AUTH_USERNAME = getenv("AUTH_USERNAME")
+    AUTH_PASSWORD = getenv("AUTH_PASSWORD")

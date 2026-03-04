@@ -17,6 +17,7 @@ from arcis.router.auto_flow import auto_flow_router
 from arcis.router.user_status import user_status_router
 from arcis.router.token_tracker import token_tracker_router
 from arcis.router.onboarding import onboarding_router
+from arcis.router.auth import auth_router
 
 from arcis.database.mongo.connection import mongo
 
@@ -114,6 +115,7 @@ api_server.include_router(auto_flow_router)
 api_server.include_router(user_status_router)
 api_server.include_router(token_tracker_router)
 api_server.include_router(onboarding_router)
+api_server.include_router(auth_router)
 
 
 if __name__ == '__main__':
