@@ -69,12 +69,14 @@ async def planner_node(state: AgentState) -> AgentState:
             # Convert pipeline output to a dictionary of {label: score}
             scores = {e['label']: e['score'] for e in emotions_result[0]}
             
-            # Map Hugging Face labels to UserEmotion fields
-            # HF labels: anger, disgust, fear, joy, neutral, sadness, surprise
-            mapped_happiness = scores.get('joy', 0.0)
-            mapped_frustration = min(1.0, scores.get('anger', 0.0) + scores.get('disgust', 0.0))
-            mapped_urgency = min(1.0, scores.get('fear', 0.0) + (scores.get('surprise', 0.0) * 0.5))
-            mapped_confusion = scores.get('surprise', 0.0)
+            def to_10_scale(val):
+                # Clamps input to [0, 1] then maps to [1, 10] integer
+                return int(round(min(1.0, max(0.0, val)) * 9) + 1)
+
+            mapped_happiness = to_10_scale(scores.get('joy', 0.0))
+            mapped_frustration = to_10_scale(min(1.0, scores.get('anger', 0.0) + scores.get('disgust', 0.0)))
+            mapped_urgency = to_10_scale(min(1.0, scores.get('fear', 0.0) + (scores.get('surprise', 0.0) * 0.5)))
+            mapped_confusion = to_10_scale(scores.get('surprise', 0.0))
             
             emotion_obj = UserEmotion(
                 happiness=mapped_happiness,
