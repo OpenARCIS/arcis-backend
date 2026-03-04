@@ -142,9 +142,7 @@ class LLMFactory:
             return ChatNVIDIA(
                 model=kwargs.get("model_name", "meta/llama-3.1-8b-instruct"),
                 temperature=kwargs.get("temperature", 0.7),
-                api_key=api_key,
-                max_retries=3,
-                timeout=30,
+                api_key=api_key
             )
 
         else:
