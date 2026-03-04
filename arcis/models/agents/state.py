@@ -21,3 +21,4 @@ class AgentState(TypedDict):
     current_step_index: int  # Track which step we're on
     next_node: Optional[Literal["email_agent", "booking_agent", "utility_agent", "mcp_agent", "replanner"]]
     workflow_status: Optional[Literal["CONTINUE", "FINISHED", "FAILED"]]
+    user_emotion: Optional[Dict[str, Any]]  # Current + recent emotion data

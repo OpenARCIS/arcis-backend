@@ -12,7 +12,7 @@ from arcis.core.llm.long_memory import long_memory
 from arcis.logger import LOGGER
 
 # Import emotion tracker and Hugging Face pipeline
-from arcis.core.utils.emotion_tracker import save_user_emotion
+from arcis.core.utils.emotion_tracker import save_user_emotion, get_recent_emotions
 from transformers import pipeline
 
 from arcis.models.agents.response import UserEmotion 
@@ -93,6 +93,24 @@ async def planner_node(state: AgentState) -> AgentState:
             LOGGER.error(f"Emotion analysis failed: {e}")
     # ------------------------------
 
+    # --- Fetch recent emotion history from DB ---
+    emotion_context = {}
+    try:
+        recent_emotions = await get_recent_emotions(limit=5)
+        if recent_emotions:
+            emotion_context["recent_history"] = [
+                {
+                    "emotions": r["emotions"],
+                    "timestamp": str(r["timestamp"])
+                }
+                for r in recent_emotions
+            ]
+            # Use the most recent entry as 'current'
+            emotion_context["current"] = recent_emotions[0]["emotions"]
+            LOGGER.info(f"PLANNER emotion context: current={emotion_context['current']}")
+    except Exception as e:
+        LOGGER.warning(f"Failed to fetch emotion history: {e}")
+
     history = _format_history(state.get("messages", []))
 
     # Fetch relevant long-term memories
@@ -114,6 +132,9 @@ async def planner_node(state: AgentState) -> AgentState:
 User Context (from long-term memory):
 {long_term_context}
 
+User Emotional State:
+{emotion_context}
+
 Latest User Request: {input}
 
 Generate a detailed execution plan.""")
@@ -122,10 +143,23 @@ Generate a detailed execution plan.""")
     llm_client = LLMFactory.get_client_for_agent("planner")
     planner_llm = llm_client.with_structured_output(PlanModel, include_raw=True)
 
+    # Format emotion context for the prompt
+    if emotion_context.get("current"):
+        ec = emotion_context["current"]
+        emotion_text = (
+            f"Happiness: {ec.get('happiness', '?')}/10, "
+            f"Frustration: {ec.get('frustration', '?')}/10, "
+            f"Urgency: {ec.get('urgency', '?')}/10, "
+            f"Confusion: {ec.get('confusion', '?')}/10"
+        )
+    else:
+        emotion_text = "(No emotion data available)"
+
     messages = planner_prompt.format_messages(
         input=state["input"],
         history=history,
         long_term_context=long_term_context or "(No stored context)",
+        emotion_context=emotion_text,
     )
     response = await planner_llm.ainvoke(messages)
     
@@ -166,7 +200,7 @@ Generate a detailed execution plan.""")
         LOGGER.info(f"  {step['id']}. [{step['assigned_agent']}] {step['description']}")
     LOGGER.info("="*60)
     
-    # Inject long-term memories into context so agents can use them
+    # Inject long-term memories and emotion data into context so agents can use them
     ctx = {}
     if long_term_context:
         ctx["long_term_memory"] = long_term_context
@@ -176,4 +210,5 @@ Generate a detailed execution plan.""")
         "plan": plan_steps,
         "current_step_index": 0,
         "context": ctx,
+        "user_emotion": emotion_context if emotion_context else None,
     }

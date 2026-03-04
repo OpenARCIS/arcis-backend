@@ -36,7 +36,14 @@ If the message IS conversational:
 
 Examples of conversational messages: "Hi", "How are you?", "Thanks!", "What can you do?", "Good morning", "Tell me a joke"
 Examples of NON-conversational (actionable) messages: "Send an email to John", "Book a train to Delhi", "Check my calendar", "Search for hotels in Paris"
-"""
+
+EMOTION AWARENESS:
+You will receive the user's emotional state (happiness, frustration, urgency, confusion on a 1-10 scale).
+- **High frustration (≥7)**: Prioritize efficiency, avoid unnecessary steps, keep the plan lean.
+- **High urgency (≥7)**: Put time-critical steps first, minimize blocking dependencies.
+- **High confusion (≥7)**: Add clarifying context in step descriptions so agents can explain clearly.
+- **Low happiness + high frustration**: Be empathetic in direct_response if conversational.
+Use this data to inform your planning decisions, not to override the user's explicit request."""
 
 
 SUPERVISOR_PROMPT = """You are the Workflow Supervisor, the central orchestrator of a multi-agent system.

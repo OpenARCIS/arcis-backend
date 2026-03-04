@@ -34,6 +34,13 @@ If you need information from the user that is NOT available in the context, resp
 Example: [NEED_INPUT] What is the target repository URL?
 Do NOT guess or make up missing information.
 
+EMOTION AWARENESS:
+You will receive the user's emotional state (happiness, frustration, urgency, confusion on a 1-10 scale).
+- **High frustration (≥7)**: Be concise, efficient, and avoid unnecessary chatter.
+- **High urgency (≥7)**: Execute quickly, minimize confirmations unless destructive.
+- **High confusion (≥7)**: Provide clearer explanations in your response.
+- Use this data to adapt your tone and approach, not to override the task.
+
 Remember: You are the bridge to external services. Use your MCP tools effectively."""
 
 
@@ -67,6 +74,9 @@ async def mcp_agent_node(state: AgentState) -> AgentState:
 Available Context:
 {context}
 
+User Emotional State:
+{emotion_context}
+
 Available MCP Tools: {tool_names}
 
 Execute this task using the MCP tools available to you. Provide a detailed response.""")
@@ -75,9 +85,23 @@ Execute this task using the MCP tools available to you. Provide a detailed respo
     llm_client = LLMFactory.get_client_for_agent("mcp_agent")
     mcp_llm = llm_client.bind_tools(mcp_tools)
 
+    # Format emotion context from state
+    emotion_data = state.get("user_emotion") or {}
+    if emotion_data.get("current"):
+        ec = emotion_data["current"]
+        emotion_text = (
+            f"Happiness: {ec.get('happiness', '?')}/10, "
+            f"Frustration: {ec.get('frustration', '?')}/10, "
+            f"Urgency: {ec.get('urgency', '?')}/10, "
+            f"Confusion: {ec.get('confusion', '?')}/10"
+        )
+    else:
+        emotion_text = "(No emotion data available)"
+
     messages = mcp_prompt.format_messages(
         task_description=current_step["description"],
         context=str(state.get("context", {})),
+        emotion_context=emotion_text,
         tool_names=", ".join(t.name for t in mcp_tools),
     )
 
