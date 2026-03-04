@@ -1,3 +1,4 @@
+import asyncio
 from typing import List
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
@@ -10,6 +11,24 @@ from arcis.core.utils.token_tracker import save_token_usage
 from arcis.core.llm.long_memory import long_memory
 from arcis.logger import LOGGER
 
+# Import emotion tracker and Hugging Face pipeline
+from arcis.core.utils.emotion_tracker import save_user_emotion
+from transformers import pipeline
+
+from arcis.models.agents.response import UserEmotion 
+
+# Initialize the Hugging Face model (runs once on startup)
+try:
+    LOGGER.info("Loading emotion analysis model...")
+    emotion_classifier = pipeline(
+        "text-classification", 
+        model="j-hartmann/emotion-english-distilroberta-base", 
+        top_k=None
+    )
+    LOGGER.info("Emotion analysis model loaded successfully.")
+except Exception as e:
+    LOGGER.error(f"Failed to load emotion classifier: {e}")
+    emotion_classifier = None
 
 def _format_history(messages: list, max_turns: int = 10) -> str:
     """Format recent messages into a readable conversation string for the prompt."""
@@ -27,7 +46,6 @@ def _format_history(messages: list, max_turns: int = 10) -> str:
     
     return "\n".join(lines) if lines else "(No prior conversation)"
 
-
 def _format_memories(memories: list) -> str:
     """Format long-term memory results into context text."""
     if not memories:
@@ -35,9 +53,44 @@ def _format_memories(memories: list) -> str:
     lines = [f"- {m['text']}" for m in memories]
     return "\n".join(lines)
 
-
 async def planner_node(state: AgentState) -> AgentState:
     
+    # --- Emotion Analysis Block ---
+    if emotion_classifier:
+        try:
+            loop = asyncio.get_running_loop()
+            user_input = state["input"]
+            
+            # Run the synchronous pipeline in an executor
+            emotions_result = await loop.run_in_executor(
+                None, lambda: emotion_classifier(user_input)
+            )
+            
+            # Convert pipeline output to a dictionary of {label: score}
+            scores = {e['label']: e['score'] for e in emotions_result[0]}
+            
+            # Map Hugging Face labels to UserEmotion fields
+            # HF labels: anger, disgust, fear, joy, neutral, sadness, surprise
+            mapped_happiness = scores.get('joy', 0.0)
+            mapped_frustration = min(1.0, scores.get('anger', 0.0) + scores.get('disgust', 0.0))
+            mapped_urgency = min(1.0, scores.get('fear', 0.0) + (scores.get('surprise', 0.0) * 0.5))
+            mapped_confusion = scores.get('surprise', 0.0)
+            
+            emotion_obj = UserEmotion(
+                happiness=mapped_happiness,
+                frustration=mapped_frustration,
+                urgency=mapped_urgency,
+                confusion=mapped_confusion
+            )
+            
+            # Save using existing MongoDB tracker
+            await save_user_emotion(emotion_obj, user_input)
+            LOGGER.info(f"PLANNER detected emotions: {emotion_obj.model_dump()}")
+            
+        except Exception as e:
+            LOGGER.error(f"Emotion analysis failed: {e}")
+    # ------------------------------
+
     history = _format_history(state.get("messages", []))
 
     # Fetch relevant long-term memories
@@ -63,7 +116,6 @@ Latest User Request: {input}
 
 Generate a detailed execution plan.""")
     ])
-    
     
     llm_client = LLMFactory.get_client_for_agent("planner")
     planner_llm = llm_client.with_structured_output(PlanModel, include_raw=True)

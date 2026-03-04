@@ -2,6 +2,13 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
+class UserEmotion(BaseModel):
+    happiness: int = Field(description="1-10 scale (1=Very Unhappy, 10=Very Happy)", ge=1, le=10)
+    frustration: int = Field(description="1-10 scale (1=Calm, 10=Very Frustrated)", ge=1, le=10)
+    urgency: int = Field(description="1-10 scale (1=Low, 10=High)", ge=1, le=10)
+    confusion: int = Field(description="1-10 scale (1=Clear, 10=Very Confused)", ge=1, le=10)
+
+
 class PlanStepModel(BaseModel):
     """Structured output for individual plan steps"""
     description: str = Field(description="Clear, actionable description of the step")
