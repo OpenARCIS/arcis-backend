@@ -48,6 +48,9 @@ class Config:
 
     WORK_DIR = getenv("WORK_DIR", "./")
 
+    # Scheduler Config
+    SCHEDULER_PREFETCH_LEAD_MINUTES = int(getenv("SCHEDULER_PREFETCH_LEAD_MINUTES", "120"))
+
     # Simple Auth config
     AUTH_USERNAME = getenv("AUTH_USERNAME")
     AUTH_PASSWORD = getenv("AUTH_PASSWORD")

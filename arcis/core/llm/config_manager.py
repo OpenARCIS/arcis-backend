@@ -61,6 +61,16 @@ DEFAULT_AGENTS_CONFIG = {
         "provider": LLMProvider.GROQ,
         "model_name": "openai/gpt-oss-120b",
         "temperature": 0.7
+    },
+    "scheduler_agent": {
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
+        "temperature": 0.3
+    },
+    "scheduler_prefetch": {
+        "provider": LLMProvider.GROQ,
+        "model_name": "openai/gpt-oss-120b",
+        "temperature": 0.5
     }
 }
 

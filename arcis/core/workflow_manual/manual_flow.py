@@ -11,6 +11,7 @@ from arcis.core.workflow_manual.agents.booking_agent import booking_agent_node
 from arcis.core.workflow_manual.agents.utility_agent import utility_agent_node
 from arcis.core.workflow_manual.agents.mcp_agent import mcp_agent_node
 from arcis.core.workflow_manual.agents.replanner import replanner_node, replanner_router
+from arcis.core.workflow_manual.agents.scheduler_agent import scheduler_agent_node
 
 from arcis.core.llm.short_memory import checkpointer # mongodb per thread memory
 from arcis.core.llm import memory_extractor
@@ -27,6 +28,7 @@ def create_workflow() -> StateGraph:
     workflow.add_node("booking_agent", booking_agent_node)
     workflow.add_node("utility_agent", utility_agent_node)
     workflow.add_node("mcp_agent", mcp_agent_node)
+    workflow.add_node("scheduler_agent", scheduler_agent_node)
     workflow.add_node("replanner", replanner_node)
     
     # planner routes to supervisor OR directly to END for simple messages
@@ -48,6 +50,7 @@ def create_workflow() -> StateGraph:
             "booking_agent": "booking_agent",
             "utility_agent": "utility_agent",
             "mcp_agent": "mcp_agent",
+            "scheduler_agent": "scheduler_agent",
             "replanner": "replanner"
         }
     )
@@ -56,6 +59,7 @@ def create_workflow() -> StateGraph:
     workflow.add_edge("booking_agent", "replanner")
     workflow.add_edge("utility_agent", "replanner")
     workflow.add_edge("mcp_agent", "replanner")
+    workflow.add_edge("scheduler_agent", "replanner")
     
     workflow.add_conditional_edges(
         "replanner",

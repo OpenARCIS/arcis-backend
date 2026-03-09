@@ -29,18 +29,13 @@ from arcis.core.tts.tts_manager import tts_manager
 
 from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
 from arcis.core.mcp.manager import mcp_manager
+from arcis.core.scheduler.scheduler_service import scheduler_service
+from arcis.router.scheduler import scheduler_router
 
 warnings.filterwarnings("ignore", message="Pydantic serializer warnings") # because of the usage of raw_response in pydantic models
 
 
-async def check_emails_cron():
-    try:
-        while True:
-            await asyncio.sleep(Config.AUTO_CHECK_INTERVAL)
-            await run_autonomous_processing()
-        return True
-    except asyncio.CancelledError:
-        pass
+
 
 
 @asynccontextmanager
@@ -77,15 +72,32 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             LOGGER.error(f"Failed to start Telegram Bot: {e}")
 
-    cron_task = asyncio.create_task(check_emails_cron())
+    cron_task = None
+    try:
+        await scheduler_service.start()
+        scheduler_service.add_email_cron(int(Config.AUTO_CHECK_INTERVAL))
+    except Exception as e:
+        LOGGER.error(f"Scheduler startup failed, falling back to simple cron: {e}")
+        # Fallback to simple asyncio cron if APScheduler fails
+        async def _fallback_cron():
+            try:
+                while True:
+                    await asyncio.sleep(int(Config.AUTO_CHECK_INTERVAL))
+                    await run_autonomous_processing()
+            except asyncio.CancelledError:
+                pass
+        cron_task = asyncio.create_task(_fallback_cron())
     
     yield
     
-    cron_task.cancel()
-    try:
-        await cron_task
-    except asyncio.CancelledError:
-        pass
+    if cron_task:
+        cron_task.cancel()
+        try:
+            await cron_task
+        except asyncio.CancelledError:
+            pass
+    
+    await scheduler_service.shutdown()
         
     if tg_arcis:
         try:
@@ -112,6 +124,7 @@ api_server.include_router(settings_router)
 api_server.include_router(calendar_router)
 api_server.include_router(chat_router)
 api_server.include_router(auto_flow_router)
+api_server.include_router(scheduler_router)
 api_server.include_router(user_status_router)
 api_server.include_router(token_tracker_router)
 api_server.include_router(onboarding_router)

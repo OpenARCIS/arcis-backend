@@ -12,7 +12,7 @@ class UserEmotion(BaseModel):
 class PlanStepModel(BaseModel):
     """Structured output for individual plan steps"""
     description: str = Field(description="Clear, actionable description of the step")
-    assigned_agent: Literal["EmailAgent", "BookingAgent", "UtilityAgent", "MCPAgent"] = Field(
+    assigned_agent: Literal["EmailAgent", "BookingAgent", "UtilityAgent", "SchedulerAgent", "MCPAgent"] = Field(
         description="The agent responsible for this step"
     )
 
@@ -35,7 +35,7 @@ class PlanModel(BaseModel):
 
 class SupervisorRouterResponse(BaseModel):
     """Supervisor's routing decision"""
-    next_node: Literal["email_agent", "booking_agent", "utility_agent", "mcp_agent", "replanner"] = Field(
+    next_node: Literal["email_agent", "booking_agent", "utility_agent", "scheduler_agent", "mcp_agent", "replanner"] = Field(
         description="The next node to execute"
     )
     reasoning: str = Field(description="Why this node was chosen")

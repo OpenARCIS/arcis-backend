@@ -14,6 +14,7 @@ from arcis.core.workflow_manual.agents.email_agent import email_agent_node
 from arcis.core.workflow_manual.agents.booking_agent import booking_agent_node
 from arcis.core.workflow_manual.agents.utility_agent import utility_agent_node
 from arcis.core.workflow_manual.agents.replanner import replanner_node, replanner_router
+from arcis.core.workflow_manual.agents.scheduler_agent import scheduler_agent_node
 
 from arcis.core.llm.short_memory import checkpointer
 from arcis.core.llm.pending_interrupt import save_pending, get_pending_by_id, resolve_pending
@@ -31,6 +32,7 @@ def create_auto_workflow() -> StateGraph:
     workflow.add_node("email_agent", email_agent_node)
     workflow.add_node("booking_agent", booking_agent_node)
     workflow.add_node("utility_agent", utility_agent_node)
+    workflow.add_node("scheduler_agent", scheduler_agent_node)
     workflow.add_node("replanner", replanner_node)
     
     workflow.set_entry_point("analyzer")
@@ -56,6 +58,7 @@ def create_auto_workflow() -> StateGraph:
             "email_agent": "email_agent",
             "booking_agent": "booking_agent",
             "utility_agent": "utility_agent",
+            "scheduler_agent": "scheduler_agent",
             "replanner": "replanner"
         }
     )
@@ -63,6 +66,7 @@ def create_auto_workflow() -> StateGraph:
     workflow.add_edge("email_agent", "replanner")
     workflow.add_edge("booking_agent", "replanner")
     workflow.add_edge("utility_agent", "replanner")
+    workflow.add_edge("scheduler_agent", "replanner")
     
     workflow.add_conditional_edges(
         "replanner",
