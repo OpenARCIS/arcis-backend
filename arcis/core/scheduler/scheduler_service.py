@@ -249,27 +249,21 @@ class SchedulerService:
 
 
 # ---- APScheduler-compatible wrapper functions ----
-# APScheduler calls these synchronously; they bridge to our async executors.
+# These are async functions natively awaited by APScheduler's AsyncIOScheduler.
 
-def _aps_execute_job_wrapper(job_id: str):
-    """Sync wrapper for async execute_job."""
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.create_task(execute_job(job_id))
+async def _aps_execute_job_wrapper(job_id: str):
+    """Async wrapper for execute_job."""
+    await execute_job(job_id)
 
 
-def _aps_execute_prefetch_wrapper(job_id: str):
-    """Sync wrapper for async execute_prefetch."""
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.create_task(execute_prefetch(job_id))
+async def _aps_execute_prefetch_wrapper(job_id: str):
+    """Async wrapper for execute_prefetch."""
+    await execute_prefetch(job_id)
 
 
-def _aps_async_wrapper(async_func):
-    """Generic sync wrapper for any async function."""
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.create_task(async_func())
+async def _aps_async_wrapper(async_func):
+    """Generic async wrapper for any async function."""
+    await async_func()
 
 
 # Singleton
