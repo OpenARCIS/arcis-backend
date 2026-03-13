@@ -31,6 +31,7 @@ from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
 from arcis.core.mcp.manager import mcp_manager
 from arcis.core.scheduler.scheduler_service import scheduler_service
 from arcis.router.scheduler import scheduler_router
+from arcis.router.notifications import notifications_router
 
 warnings.filterwarnings("ignore", message="Pydantic serializer warnings") # because of the usage of raw_response in pydantic models
 
@@ -125,6 +126,7 @@ api_server.include_router(calendar_router)
 api_server.include_router(chat_router)
 api_server.include_router(auto_flow_router)
 api_server.include_router(scheduler_router)
+api_server.include_router(notifications_router)
 api_server.include_router(user_status_router)
 api_server.include_router(token_tracker_router)
 api_server.include_router(onboarding_router)

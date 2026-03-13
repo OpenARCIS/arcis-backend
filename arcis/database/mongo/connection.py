@@ -12,6 +12,7 @@ COLLECTIONS = {
     'onboarding_sessions': 'onboarding_sessions',
     'scheduled_jobs': 'scheduled_jobs',
     'apscheduler_jobs': 'apscheduler_jobs',
+    'notifications': 'notifications',
 }
 
 class Database:
@@ -44,6 +45,13 @@ class Database:
         )
         await self.db[COLLECTIONS['scheduled_jobs']].create_index(
             [("status", 1), ("prefetch_at", 1)]
+        )
+        await self.db[COLLECTIONS['notifications']].create_index(
+            [("created_at", 1)],
+            expireAfterSeconds=30 * 24 * 3600  # auto-delete after 30 days
+        )
+        await self.db[COLLECTIONS['notifications']].create_index(
+            [("read", 1), ("created_at", -1)]
         )
 
 

@@ -1,7 +1,7 @@
 from arcis.core.scheduler.job_store import job_store
 from arcis.core.scheduler.context_prefetcher import prefetch_context
+from arcis.core.scheduler.notification_dispatcher import dispatcher
 from arcis.models.scheduler.job_models import JobStatus, JobType
-from arcis.tg_plugins.tg_notify import notify_action
 from arcis.logger import LOGGER
 
 
@@ -72,11 +72,11 @@ async def _execute_reminder(job_id: str, job: dict):
     message = job.get("notification_message") or title
     description = job.get("description", "")
 
-    notification = f"🔔 Reminder: {message}"
+    body = f"🔔 {message}"
     if description:
-        notification += f"\n📝 {description}"
+        body += f"\n📝 {description}"
 
-    await notify_action(notification)
+    await dispatcher.send(title=f"Reminder: {title}", message=body, job_id=job_id, level="info")
     await job_store.set_status(job_id, JobStatus.COMPLETED)
     LOGGER.info(f"EXECUTOR: Reminder {job_id} sent successfully")
 
@@ -93,27 +93,27 @@ async def _execute_todo_event(job_id: str, job: dict):
 
     # Build notification
     emoji = "📋" if job_type == JobType.TODO.value else "📅"
-    notification = f"{emoji} {job_type.title()}: {title}"
+    body = f"{emoji} {job_type.title()}: {title}"
     
     if description:
-        notification += f"\n📝 {description}"
+        body += f"\n📝 {description}"
 
     # Include prefetched context summary
     if context:
-        notification += "\n\n📎 Prepared Context:"
+        body += "\n\n📎 Prepared Context:"
         
         if "web_search" in context:
             web_items = context["web_search"]
-            notification += f"\n🌐 Web Research ({len(web_items)} sources):"
+            body += f"\n🌐 Web Research ({len(web_items)} sources):"
             for item in web_items[:3]:
                 result_text = str(item.get("result", ""))[:200]
-                notification += f"\n  • {item.get('query', '')}: {result_text}"
+                body += f"\n  • {item.get('query', '')}: {result_text}"
         
         if "long_term_memory" in context:
             memory_text = str(context["long_term_memory"])[:300]
-            notification += f"\n🧠 Related Memory:\n  {memory_text}"
+            body += f"\n🧠 Related Memory:\n  {memory_text}"
 
-    await notify_action(notification)
+    await dispatcher.send(title=f"{job_type.title()}: {title}", message=body, job_id=job_id, level="info")
     await job_store.set_status(job_id, JobStatus.COMPLETED)
     LOGGER.info(f"EXECUTOR: {job_type} {job_id} notified successfully")
 
@@ -145,16 +145,28 @@ async def _execute_cron(job_id: str, job: dict):
             if isinstance(result, dict):
                 final_response = result.get("final_response", "Task executed")
             
-            await notify_action(
-                f"⚙️ Cron Job: {title}\n"
-                f"✅ Completed: {final_response[:500]}"
+            await dispatcher.send(
+                title=title,
+                message=final_response,
+                job_id=job_id,
+                level="success",
             )
         except Exception as e:
             LOGGER.error(f"EXECUTOR: Cron workflow failed for {job_id}: {e}")
-            await notify_action(f"⚙️ Cron Job: {title}\n❌ Error: {str(e)[:200]}")
+            await dispatcher.send(
+                title=f"Cron Job: {title}",
+                message=f"⚙️ Cron Job: {title}\n❌ Error: {str(e)}",
+                job_id=job_id,
+                level="error",
+            )
     else:
         # Simple cron: just notify
-        await notify_action(f"⚙️ Cron Job: {title}\n📝 {description}")
+        await dispatcher.send(
+            title=title,
+            message=description,
+            job_id=job_id,
+            level="info",
+        )
 
     # Don't mark cron jobs as completed — they keep running
     # APScheduler handles the recurrence via CronTrigger
