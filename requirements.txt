@@ -26,3 +26,4 @@ mcp
 langchain-nvidia-ai-endpoints
 transformers
 torch
+APScheduler
