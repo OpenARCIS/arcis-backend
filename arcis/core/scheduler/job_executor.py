@@ -2,6 +2,8 @@ from arcis.core.scheduler.job_store import job_store
 from arcis.core.scheduler.context_prefetcher import prefetch_context
 from arcis.core.scheduler.notification_dispatcher import dispatcher
 from arcis.models.scheduler.job_models import JobStatus, JobType
+from arcis.core.llm.factory import LLMFactory
+from arcis.core.utils.token_tracker import save_token_usage
 from arcis.logger import LOGGER
 
 
@@ -65,6 +67,66 @@ async def execute_prefetch(job_id: str):
         await job_store.set_status(job_id, JobStatus.READY)
 
 
+# ---- Notification humanizer ----
+
+async def _humanize_context(title: str, description: str, context: dict) -> str:
+    """
+    Use a lightweight LLM call to turn raw prefetched context into a
+    friendly, human-readable notification message.
+    Returns empty string if there's nothing to humanize.
+    """
+    if not context:
+        return ""
+
+    # Collect raw material
+    raw_parts = []
+
+    if "prefetch_response" in context:
+        raw_parts.append(context["prefetch_response"])
+
+    if "web_search" in context:
+        for item in context["web_search"][:3]:
+            raw_parts.append(str(item.get("result", "")))
+
+    if "prefetch_details" in context:
+        raw_parts.append(str(context["prefetch_details"]))
+
+    if "long_term_memory" in context:
+        raw_parts.append(str(context["long_term_memory"]))
+
+    if not raw_parts:
+        return ""
+
+    raw_text = "\n---\n".join(raw_parts)
+    # Truncate to avoid token overload
+    if len(raw_text) > 3000:
+        raw_text = raw_text[:3000] + "\n...(truncated)"
+
+    try:
+        llm = LLMFactory.get_client_for_agent("utility_agent")
+        prompt = (
+            f"You are writing a notification message for the user about their scheduled task.\n"
+            f"Task: {title}\n"
+            f"Description: {description}\n\n"
+            f"Here is the raw context gathered for this task:\n{raw_text}\n\n"
+            f"Write a SHORT, friendly, and helpful notification summarizing the key info. "
+            f"Use clear language, bullet points where helpful, and emojis sparingly. "
+            f"Do NOT include raw JSON, tool output, or technical metadata. "
+            f"Keep it under 500 words. Be conversational, like a helpful assistant."
+        )
+        response = await llm.ainvoke(prompt)
+
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            await save_token_usage("notification_humanizer", response.usage_metadata)
+
+        return response.content.strip()
+    except Exception as e:
+        LOGGER.warning(f"EXECUTOR: Humanizer failed, using raw context: {e}")
+        # Fallback: return the prefetch_response if available, else empty
+        return context.get("prefetch_response", "")
+
+
+# ---- Job type handlers ----
 
 async def _execute_reminder(job_id: str, job: dict):
     """Notification with optional prefetched context."""
@@ -77,16 +139,11 @@ async def _execute_reminder(job_id: str, job: dict):
     if description:
         body += f"\n📝 {description}"
 
-    # Include prefetched context if available
+    # Humanize prefetched context if available
     if context:
-        if "prefetch_response" in context:
-            body += f"\n\n🧠 Prepared by AI:\n{context['prefetch_response']}"
-        elif "web_search" in context:
-            web_items = context["web_search"]
-            body += f"\n\n📎 Context ({len(web_items)} sources):"
-            for item in web_items[:3]:
-                result_text = str(item.get("result", ""))[:200]
-                body += f"\n  • {item.get('query', '')}: {result_text}"
+        humanized = await _humanize_context(title, description, context)
+        if humanized:
+            body += f"\n\n{humanized}"
 
     await dispatcher.send(title=f"Reminder: {title}", message=body, job_id=job_id, level="info")
     await job_store.set_status(job_id, JobStatus.COMPLETED)
@@ -109,25 +166,11 @@ async def _execute_todo_event(job_id: str, job: dict):
     if description:
         body += f"\n📝 {description}"
 
-    # Include prefetched context
+    # Humanize prefetched context
     if context:
-        # Deep prefetch output (from planner graph)
-        if "prefetch_response" in context:
-            body += f"\n\n🧠 Prepared by AI:\n{context['prefetch_response']}"
-        
-        # Shallow fallback: web search results
-        elif "web_search" in context:
-            body += "\n\n📎 Prepared Context:"
-            web_items = context["web_search"]
-            body += f"\n🌐 Web Research ({len(web_items)} sources):"
-            for item in web_items[:3]:
-                result_text = str(item.get("result", ""))[:200]
-                body += f"\n  • {item.get('query', '')}: {result_text}"
-        
-        # Long-term memory (available in both modes)
-        if "long_term_memory" in context:
-            memory_text = str(context["long_term_memory"])[:300]
-            body += f"\n🧠 Related Memory:\n  {memory_text}"
+        humanized = await _humanize_context(title, description, context)
+        if humanized:
+            body += f"\n\n{humanized}"
 
     await dispatcher.send(title=f"{job_type.title()}: {title}", message=body, job_id=job_id, level="info")
     await job_store.set_status(job_id, JobStatus.COMPLETED)
@@ -187,4 +230,4 @@ async def _execute_cron(job_id: str, job: dict):
     # Don't mark cron jobs as completed — they keep running
     # APScheduler handles the recurrence via CronTrigger
     await job_store.update_job(job_id, {"status": JobStatus.TRIGGERED.value})
-    LOGGER.info(f"EXECUTOR: Cron job {job_id} triggered successfully")
+    LOGGER.info(f"EXECUTOR: Cron job {job_id} triggered successfully")
