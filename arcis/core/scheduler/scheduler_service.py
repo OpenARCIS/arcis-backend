@@ -74,11 +74,18 @@ class SchedulerService:
             job.context["prefetch_queries"] = job._prefetch_queries
 
         # 2. Auto-calculate prefetch_at if needed but not set
-        if job.job_type in (JobType.TODO, JobType.EVENT) and not job.prefetch_at:
+        #    Enable for TODO/EVENT by default, and for ANY job type that has prefetch queries
+        has_prefetch_queries = bool(job.context.get("prefetch_queries"))
+        needs_prefetch = job.job_type in (JobType.TODO, JobType.EVENT) or has_prefetch_queries
+        if needs_prefetch and not job.prefetch_at:
             lead = timedelta(minutes=PREFETCH_LEAD_MINUTES)
             candidate = job.trigger_at - lead
             if candidate > datetime.now():
                 job.prefetch_at = candidate
+            elif has_prefetch_queries:
+                # If trigger is too soon for the normal lead time but prefetch was
+                # explicitly requested, schedule it to run immediately
+                job.prefetch_at = datetime.now() + timedelta(seconds=5)
 
         # 3. Save to our metadata store
         job_id = await job_store.create_job(job)

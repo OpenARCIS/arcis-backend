@@ -67,14 +67,26 @@ async def execute_prefetch(job_id: str):
 
 
 async def _execute_reminder(job_id: str, job: dict):
-    """Simple notification — no LLM needed."""
+    """Notification with optional prefetched context."""
     title = job.get("title", "Reminder")
     message = job.get("notification_message") or title
     description = job.get("description", "")
+    context = job.get("context", {})
 
     body = f"🔔 {message}"
     if description:
         body += f"\n📝 {description}"
+
+    # Include prefetched context if available
+    if context:
+        if "prefetch_response" in context:
+            body += f"\n\n🧠 Prepared by AI:\n{context['prefetch_response']}"
+        elif "web_search" in context:
+            web_items = context["web_search"]
+            body += f"\n\n📎 Context ({len(web_items)} sources):"
+            for item in web_items[:3]:
+                result_text = str(item.get("result", ""))[:200]
+                body += f"\n  • {item.get('query', '')}: {result_text}"
 
     await dispatcher.send(title=f"Reminder: {title}", message=body, job_id=job_id, level="info")
     await job_store.set_status(job_id, JobStatus.COMPLETED)
@@ -84,7 +96,6 @@ async def _execute_reminder(job_id: str, job: dict):
 async def _execute_todo_event(job_id: str, job: dict):
     """
     Send notification with prefetched context.
-    Supports both deep prefetch (from planner graph) and shallow (web+memory).
     """
     title = job.get("title", "Task")
     job_type = job.get("job_type", "todo")
