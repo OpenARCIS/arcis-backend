@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -49,7 +49,7 @@ Parse this into scheduling parameters.""")
     messages = scheduler_prompt.format_messages(
         task_description=current_step["description"],
         context=str(state.get("context", {})),
-        current_time=datetime.now().isoformat()
+        current_time=datetime.now(tz=timezone.utc).isoformat()
     )
 
     response = await scheduler_llm.ainvoke(messages)

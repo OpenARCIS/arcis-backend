@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
 
@@ -65,7 +65,7 @@ class ScheduledJob(BaseModel):
 
     # Status tracking
     status: JobStatus = JobStatus.PENDING
-    created_at: datetime = Field(default_factory=lambda: datetime.now())
+    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
     completed_at: Optional[datetime] = None
     error: Optional[str] = None
 
