@@ -84,7 +84,7 @@ async def _execute_reminder(job_id: str, job: dict):
 async def _execute_todo_event(job_id: str, job: dict):
     """
     Send notification with prefetched context.
-    If context gathering happened, include it in the notification.
+    Supports both deep prefetch (from planner graph) and shallow (web+memory).
     """
     title = job.get("title", "Task")
     job_type = job.get("job_type", "todo")
@@ -98,17 +98,22 @@ async def _execute_todo_event(job_id: str, job: dict):
     if description:
         body += f"\n📝 {description}"
 
-    # Include prefetched context summary
+    # Include prefetched context
     if context:
-        body += "\n\n📎 Prepared Context:"
+        # Deep prefetch output (from planner graph)
+        if "prefetch_response" in context:
+            body += f"\n\n🧠 Prepared by AI:\n{context['prefetch_response']}"
         
-        if "web_search" in context:
+        # Shallow fallback: web search results
+        elif "web_search" in context:
+            body += "\n\n📎 Prepared Context:"
             web_items = context["web_search"]
             body += f"\n🌐 Web Research ({len(web_items)} sources):"
             for item in web_items[:3]:
                 result_text = str(item.get("result", ""))[:200]
                 body += f"\n  • {item.get('query', '')}: {result_text}"
         
+        # Long-term memory (available in both modes)
         if "long_term_memory" in context:
             memory_text = str(context["long_term_memory"])[:300]
             body += f"\n🧠 Related Memory:\n  {memory_text}"
