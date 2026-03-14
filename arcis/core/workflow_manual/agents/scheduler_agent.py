@@ -3,7 +3,7 @@ from datetime import datetime
 from langchain_core.prompts import ChatPromptTemplate
 
 from arcis.core.llm.factory import LLMFactory
-from arcis.core.llm.prompts import SCHEDULER_AGENT_PROMPT
+from arcis.core.llm.prompts.scheduler import SCHEDULER_AGENT_PROMPT
 from arcis.models.agents.state import AgentState
 from arcis.models.scheduler.job_models import ScheduledJob, SchedulerParseResult
 from arcis.core.scheduler.scheduler_service import scheduler_service

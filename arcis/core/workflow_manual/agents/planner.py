@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState, PlanStep
 from arcis.models.agents.response import PlanModel
-from arcis.core.llm.prompts import PLANNER_PROMPT, PREFETCH_PLANNER_PROMPT
+from arcis.core.llm.prompts.planner import PLANNER_PROMPT, PREFETCH_PLANNER_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
 from arcis.core.llm.long_memory import long_memory
 from arcis.logger import LOGGER

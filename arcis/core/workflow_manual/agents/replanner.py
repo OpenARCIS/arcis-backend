@@ -4,7 +4,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState
 from arcis.models.agents.response import ReplannerResponse
-from arcis.core.llm.prompts import REPLANNER_PROMPT
+from arcis.core.llm.prompts.replanner import REPLANNER_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
 from arcis.logger import LOGGER
 

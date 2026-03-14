@@ -13,7 +13,8 @@ from datetime import datetime
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 from arcis.core.llm.factory import LLMFactory
-from arcis.core.llm.prompts import INTERVIEWER_PROMPT, MEMORY_EXTRACTOR_PROMPT
+from arcis.core.llm.prompts.interviewer import INTERVIEWER_PROMPT
+from arcis.core.llm.prompts.memory_extractor import MEMORY_EXTRACTOR_PROMPT
 from arcis.core.llm.long_memory import long_memory
 from arcis.core.llm.short_memory import db_client
 

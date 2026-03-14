@@ -13,9 +13,9 @@ DEFAULT_AGENTS_CONFIG = {
         "temperature": 0.1
     },
     "planner": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.4
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "meta/llama-3.3-70b-instruct",
+        "temperature": 0.2
     },
     "email_agent": {
         "provider": LLMProvider.GROQ,
@@ -28,9 +28,9 @@ DEFAULT_AGENTS_CONFIG = {
         "temperature": 0.5
     },
     "replanner": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.5
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "meta/llama-3.3-70b-instruct",
+        "temperature": 0.2
     },
     "health_monitor": {
         "provider": LLMProvider.GROQ,
@@ -38,8 +38,8 @@ DEFAULT_AGENTS_CONFIG = {
         "temperature": 0.7
     },
     "utility_agent": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "qwen/qwen3-next-80b-a3b-instruct",
         "temperature": 0.7
     },
     "mcp_agent": {
@@ -48,18 +48,18 @@ DEFAULT_AGENTS_CONFIG = {
         "temperature": 0.3
     },
     "analyzer": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.7
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "meta/llama-3.3-70b-instruct",
+        "temperature": 0.2
     },
     "memory_extractor": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.3
+        "provider": LLMProvider.MISTRAL_AI,
+        "model_name": "mistral-medium",
+        "temperature": 0.1
     },
     "interviewer": {
         "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
+        "model_name": "llama-3.3-70b-versatile",
         "temperature": 0.7
     },
     "scheduler_agent": {

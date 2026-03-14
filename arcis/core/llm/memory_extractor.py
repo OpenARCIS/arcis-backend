@@ -2,7 +2,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from arcis.core.llm.factory import LLMFactory
 from arcis.core.llm.long_memory import long_memory
-from arcis.core.llm.prompts import MEMORY_EXTRACTOR_PROMPT
+from arcis.core.llm.prompts.memory_extractor import MEMORY_EXTRACTOR_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
 
 from arcis.models.agents.response import MemoryExtractionModel
