@@ -149,9 +149,11 @@ async def run_workflow(user_input: str, thread_id: str | None):
         )
 
     # Extract key details from conversation and save to long-term memory
+    # Skip for prefetch runs — those are system-generated, not user conversations
+    is_prefetch = final_state.get("input", "").startswith("[Scheduled Task Preparation]")
     try:
         conv_messages = final_state.get("messages", [])
-        if conv_messages:
+        if conv_messages and not is_prefetch:
             await memory_extractor.extract_and_store(conv_messages, source="manual_chat")
     except Exception as e:
         LOGGER.warning(f"Memory extraction skipped: {e}")
