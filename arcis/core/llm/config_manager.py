@@ -14,7 +14,7 @@ DEFAULT_AGENTS_CONFIG = {
     },
     "planner": {
         "provider": LLMProvider.NVIDIA_NIM,
-        "model_name": "meta/llama-3.3-70b-instruct",
+        "model_name": "mistralai/mistral-nemotron",
         "temperature": 0.2
     },
     "email_agent": {
@@ -29,17 +29,12 @@ DEFAULT_AGENTS_CONFIG = {
     },
     "replanner": {
         "provider": LLMProvider.NVIDIA_NIM,
-        "model_name": "meta/llama-3.3-70b-instruct",
+        "model_name": "mistralai/mistral-nemotron",
         "temperature": 0.2
-    },
-    "health_monitor": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "arcee-ai/trinity-mini:free",
-        "temperature": 0.7
     },
     "utility_agent": {
         "provider": LLMProvider.NVIDIA_NIM,
-        "model_name": "qwen/qwen3-next-80b-a3b-instruct",
+        "model_name": "moonshotai/kimi-k2-thinking",
         "temperature": 0.7
     },
     "mcp_agent": {
@@ -59,18 +54,13 @@ DEFAULT_AGENTS_CONFIG = {
     },
     "interviewer": {
         "provider": LLMProvider.GROQ,
-        "model_name": "llama-3.3-70b-versatile",
+        "model_name": "moonshotai/kimi-k2-instruct",
         "temperature": 0.7
     },
     "scheduler_agent": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "moonshotai/kimi-k2-thinking",
         "temperature": 0.3
-    },
-    "scheduler_prefetch": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.5
     }
 }
 

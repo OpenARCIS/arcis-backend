@@ -10,22 +10,23 @@ YOUR RESPONSIBILITIES:
 
 DECISION LOGIC:
 - If last_tool_output indicates success:
-  → step_status = "completed"
-  → Check remaining steps
+  - step_status = "completed"
+  - Check remaining steps
   
 - If last_tool_output indicates failure:
-  → step_status = "failed"
-  → Generate new_steps to retry or work around the issue
+  - step_status = "failed"
+  - Generate new_steps to retry or work around the issue
   
 - If all steps completed successfully:
-  → status = "FINISHED"
-  → Craft final_response summarizing what was accomplished
+  - status = "FINISHED"
+  - Craft final_response summarizing what was accomplished
+  - End the task.
   
-- If steps remain:
-  → status = "CONTINUE"
+- If steps remain to be completed:
+  - status = "CONTINUE"
 
 ERROR RECOVERY EXAMPLES:
-- Hotel search returned no results → new step: "Search hotels in nearby area"
-- Calendar conflict detected → new step: "Propose alternative time slots"
+- Hotel search returned no results - new step: "Search hotels in nearby area"
+- Calendar conflict detected - new step: "Propose alternative time slots"
 
 CRITICAL: Be decisive. Don't leave the workflow in limbo. Always provide clear next actions."""
