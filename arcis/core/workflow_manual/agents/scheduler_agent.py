@@ -46,10 +46,11 @@ Parse this into scheduling parameters.""")
 
     LOGGER.info(f"SCHEDULER AGENT: Parsing — {current_step['description']}")
 
+    current_time_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
     messages = scheduler_prompt.format_messages(
         task_description=current_step["description"],
         context=str(state.get("context", {})),
-        current_time=datetime.now(tz=timezone.utc).isoformat()
+        current_time=current_time_str
     )
 
     response = await scheduler_llm.ainvoke(messages)

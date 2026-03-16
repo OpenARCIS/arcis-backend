@@ -1,7 +1,8 @@
 import asyncio
 from typing import List
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from datetime import datetime, timezone
 
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState, PlanStep
@@ -131,6 +132,10 @@ Generate a detailed execution plan.""")
         history=history,
         long_term_context=long_term_context or "(No stored context)",
     )
+    
+    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {current_time}"))
+    
     response = await planner_llm.ainvoke(messages)
     
     plan_response = response["parsed"]
