@@ -138,11 +138,13 @@ class LLMFactory:
                      api_key = os.environ["NVIDIA_NIM_API_KEY"]
                  except KeyError:
                     raise InvalidAPIKey("No valid API Key has been provided to run Nvidia NIM")
-            
-            return ChatNVIDIA(
-                model=kwargs.get("model_name", "meta/llama-3.1-8b-instruct"),
+            return ChatOpenAI(
+                model=kwargs.get("model_name", "llama-3.1-8b-instant"),
                 temperature=kwargs.get("temperature", 0.7),
-                api_key=api_key
+                api_key=api_key,
+                base_url="https://integrate.api.nvidia.com/v1",
+                max_retries=3,
+                timeout=30,
             )
 
         else:

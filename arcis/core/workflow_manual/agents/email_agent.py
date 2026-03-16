@@ -4,7 +4,7 @@ from langgraph.types import interrupt
 
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState
-from arcis.core.llm.prompts import EMAIL_AGENT_PROMPT
+from arcis.core.llm.prompts.email import EMAIL_AGENT_PROMPT
 from arcis.core.workflow_manual.tools.email import email_tools
 from arcis.core.utils.token_tracker import save_token_usage
 from arcis.logger import LOGGER

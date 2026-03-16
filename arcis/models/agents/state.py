@@ -7,7 +7,7 @@ class PlanStep(TypedDict):
     id: int
     description: str
     status: Literal["pending", "in_progress", "completed", "failed"]
-    assigned_agent: Literal["EmailAgent", "BookingAgent", "UtilityAgent", "MCPAgent"]
+    assigned_agent: Literal["EmailAgent", "BookingAgent", "UtilityAgent", "SchedulerAgent", "MCPAgent"]
 
 
 class AgentState(TypedDict):
@@ -19,5 +19,5 @@ class AgentState(TypedDict):
     last_tool_output: str  # Output from last worker
     final_response: str  # Final answer for user
     current_step_index: int  # Track which step we're on
-    next_node: Optional[Literal["email_agent", "booking_agent", "utility_agent", "mcp_agent", "replanner"]]
+    next_node: Optional[Literal["email_agent", "booking_agent", "utility_agent", "scheduler_agent", "mcp_agent", "replanner"]]
     workflow_status: Optional[Literal["CONTINUE", "FINISHED", "FAILED"]]

@@ -4,7 +4,7 @@ from langgraph.types import interrupt
 
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState
-from arcis.core.llm.prompts import UTILITY_AGENT_PROMPT
+from arcis.core.llm.prompts.utility import UTILITY_AGENT_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
 from arcis.logger import LOGGER
 

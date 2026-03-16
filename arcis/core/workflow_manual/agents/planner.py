@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState, PlanStep
 from arcis.models.agents.response import PlanModel
-from arcis.core.llm.prompts import PLANNER_PROMPT
+from arcis.core.llm.prompts.planner import PLANNER_PROMPT, PREFETCH_PLANNER_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
 from arcis.core.llm.long_memory import long_memory
 from arcis.logger import LOGGER
@@ -55,8 +55,12 @@ def _format_memories(memories: list) -> str:
 
 async def planner_node(state: AgentState) -> AgentState:
     
-    # --- Emotion Analysis Block ---
-    if emotion_classifier:
+    # Detect prefetch mode (invoked from scheduler's context prefetcher)
+    is_prefetch = state["input"].startswith("[Scheduled Task Preparation]")
+    active_prompt = PREFETCH_PLANNER_PROMPT if is_prefetch else PLANNER_PROMPT
+
+    # --- Emotion Analysis Block (skip in prefetch mode — no user present) ---
+    if not is_prefetch and emotion_classifier:
         try:
             loop = asyncio.get_running_loop()
             user_input = state["input"]
@@ -107,7 +111,7 @@ async def planner_node(state: AgentState) -> AgentState:
         LOGGER.warning(f"Long-term memory lookup failed: {e}")
     
     planner_prompt = ChatPromptTemplate.from_messages([
-        ("system", PLANNER_PROMPT),
+        ("system", active_prompt),
         ("human", """Conversation History:
 {history}
 

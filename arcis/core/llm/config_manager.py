@@ -13,9 +13,9 @@ DEFAULT_AGENTS_CONFIG = {
         "temperature": 0.1
     },
     "planner": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.4
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "mistralai/mistral-nemotron",
+        "temperature": 0.2
     },
     "email_agent": {
         "provider": LLMProvider.GROQ,
@@ -28,18 +28,13 @@ DEFAULT_AGENTS_CONFIG = {
         "temperature": 0.5
     },
     "replanner": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.5
-    },
-    "health_monitor": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "arcee-ai/trinity-mini:free",
-        "temperature": 0.7
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "mistralai/mistral-nemotron",
+        "temperature": 0.2
     },
     "utility_agent": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "moonshotai/kimi-k2-thinking",
         "temperature": 0.7
     },
     "mcp_agent": {
@@ -48,19 +43,24 @@ DEFAULT_AGENTS_CONFIG = {
         "temperature": 0.3
     },
     "analyzer": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.7
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "meta/llama-3.3-70b-instruct",
+        "temperature": 0.2
     },
     "memory_extractor": {
-        "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
-        "temperature": 0.3
+        "provider": LLMProvider.MISTRAL_AI,
+        "model_name": "mistral-medium",
+        "temperature": 0.1
     },
     "interviewer": {
         "provider": LLMProvider.GROQ,
-        "model_name": "openai/gpt-oss-120b",
+        "model_name": "moonshotai/kimi-k2-instruct",
         "temperature": 0.7
+    },
+    "scheduler_agent": {
+        "provider": LLMProvider.NVIDIA_NIM,
+        "model_name": "moonshotai/kimi-k2-thinking",
+        "temperature": 0.3
     }
 }
 

@@ -2,7 +2,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState
 from arcis.models.agents.response import PlanModel
-from arcis.core.llm.prompts import AUTO_ANALYZER_PROMPT
+from arcis.core.llm.prompts.analyzer import AUTO_ANALYZER_PROMPT
 from arcis.core.utils.token_tracker import save_token_usage
 from arcis.logger import LOGGER
 

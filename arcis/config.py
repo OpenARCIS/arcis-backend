@@ -48,6 +48,13 @@ class Config:
 
     WORK_DIR = getenv("WORK_DIR", "./")
 
+    # Scheduler Config
+    SCHEDULER_PREFETCH_LEAD_MINUTES = int(getenv("SCHEDULER_PREFETCH_LEAD_MINUTES", "120"))
+
+    # Notification Config — where scheduled job notifications are sent
+    # Options: "telegram", "web", "both"
+    NOTIFICATION_CHANNEL = getenv("NOTIFICATION_CHANNEL", "both")
+
     # Simple Auth config
     AUTH_USERNAME = getenv("AUTH_USERNAME")
     AUTH_PASSWORD = getenv("AUTH_PASSWORD")

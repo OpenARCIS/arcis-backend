@@ -1,7 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
 
 from arcis.core.llm.factory import LLMFactory
-from arcis.core.llm.prompts import SUPERVISOR_PROMPT
+from arcis.core.llm.prompts.supervisor import SUPERVISOR_PROMPT
 from arcis.models.agents.state import AgentState
 from arcis.models.agents.response import SupervisorRouterResponse
 from arcis.core.utils.token_tracker import save_token_usage
