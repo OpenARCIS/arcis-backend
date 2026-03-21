@@ -1,23 +1,30 @@
 from datetime import datetime, timezone
 
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.types import interrupt
 
 from arcis.core.llm.factory import LLMFactory
 from arcis.core.llm.prompts.scheduler import SCHEDULER_AGENT_PROMPT
 from arcis.models.agents.state import AgentState
-from arcis.models.scheduler.job_models import ScheduledJob, SchedulerParseResult
-from arcis.core.scheduler.scheduler_service import scheduler_service
 from arcis.core.utils.token_tracker import save_token_usage
 from arcis.logger import LOGGER
+
+from arcis.core.workflow_manual.tools.calendar import (
+    calendar_get_items,
+    calendar_delete_item,
+    calendar_toggle_todo,
+)
+from arcis.core.workflow_manual.tools.schedule import schedule_job
+
+
+scheduler_tools = [calendar_get_items, calendar_delete_item, calendar_toggle_todo, schedule_job]
 
 
 async def scheduler_agent_node(state: AgentState) -> AgentState:
     """
-    LangGraph node that:
-    1. Extracts the current plan step
-    2. Uses LLM + structured output to parse scheduling parameters
-    3. Creates a ScheduledJob and registers it with the scheduler service
-    4. Returns confirmation in last_tool_output
+    LangGraph node that handles ALL calendar and scheduling operations
+    via tool calling: read/delete/toggle calendar items + schedule new jobs.
     """
 
     current_step = next(
@@ -28,7 +35,6 @@ async def scheduler_agent_node(state: AgentState) -> AgentState:
     if not current_step:
         return {**state, "last_tool_output": "ERROR: No in-progress step found for scheduler"}
 
-    # Build prompt with context
     scheduler_prompt = ChatPromptTemplate.from_messages([
         ("system", SCHEDULER_AGENT_PROMPT),
         ("human", """Current Task: {task_description}
@@ -36,78 +42,126 @@ async def scheduler_agent_node(state: AgentState) -> AgentState:
 Available Context:
 {context}
 
-Current Date/Time: {current_time}
-
-Parse this into scheduling parameters.""")
+Execute this task using the available tools.""")
     ])
 
     llm_client = LLMFactory.get_client_for_agent("scheduler_agent")
-    scheduler_llm = llm_client.with_structured_output(SchedulerParseResult, include_raw=True)
+    scheduler_llm = llm_client.bind_tools(scheduler_tools)
 
-    LOGGER.info(f"SCHEDULER AGENT: Parsing — {current_step['description']}")
+    LOGGER.info(f"SCHEDULER AGENT: Executing — {current_step['description']}")
 
-    current_time_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
     messages = scheduler_prompt.format_messages(
         task_description=current_step["description"],
-        context=str(state.get("context", {})),
-        current_time=current_time_str
+        context=str(state.get("context", {}))
     )
 
-    response = await scheduler_llm.ainvoke(messages)
-    parsed: SchedulerParseResult = response["parsed"]
+    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {current_time}"))
 
-    # Save token usage
-    if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
-        await save_token_usage("scheduler_agent", response["raw"].usage_metadata)
+    tool_output = ""
+    max_iterations = 3
 
-    LOGGER.info(f"SCHEDULER AGENT: Parsed — type={parsed.job_type.value}, "
-                f"trigger_at={parsed.trigger_at}, title='{parsed.title}'")
+    for i in range(max_iterations):
+        # On the last iteration, force a final answer without tools
+        if i == max_iterations - 1:
+            messages.append(HumanMessage(
+                content="You have reached the maximum number of tool iterations. "
+                        "Do NOT call any more tools. Synthesize a final answer from the information you have gathered so far."
+            ))
+            LOGGER.warning(f"SCHEDULER AGENT: Reached max iterations ({max_iterations}), forcing final answer")
+            final_response = await llm_client.ainvoke(messages)
+            if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
+                await save_token_usage("scheduler_agent", final_response.usage_metadata)
+            tool_output = final_response.content
+            break
 
-    # Create the ScheduledJob
-    job = ScheduledJob(
-        job_type=parsed.job_type,
-        title=parsed.title,
-        description=parsed.description,
-        trigger_at=parsed.trigger_at,
-        cron_expression=parsed.cron_expression,
-        notification_message=parsed.notification_message or parsed.title,
-        thread_id=state.get("thread_id"),
-    )
+        response = await scheduler_llm.ainvoke(messages)
 
-    # Embed prefetch queries in context if provided
-    if parsed.needs_context_prefetch and parsed.prefetch_queries:
-        job.context["prefetch_queries"] = parsed.prefetch_queries
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            await save_token_usage("scheduler_agent", response.usage_metadata)
+        elif hasattr(response, "response_metadata") and response.response_metadata.get("token_usage"):
+            await save_token_usage("scheduler_agent", response.response_metadata.get("token_usage"))
 
-    # Register with the scheduler service
-    try:
-        job_id = await scheduler_service.schedule_job(job)
-        
-        output = (
-            f"✅ Scheduled successfully!\n"
-            f"  Type: {parsed.job_type.value}\n"
-            f"  Title: {parsed.title}\n"
-            f"  Trigger: {parsed.trigger_at.strftime('%Y-%m-%d %H:%M')}\n"
-            f"  Job ID: {job_id}"
-        )
-        
-        if parsed.needs_context_prefetch:
-            output += f"\n  📎 Context prefetch enabled (queries: {parsed.prefetch_queries})"
-        if parsed.cron_expression:
-            output += f"\n  🔄 Recurring: {parsed.cron_expression}"
-            
-    except Exception as e:
-        LOGGER.error(f"SCHEDULER AGENT: Failed to schedule job: {e}")
-        output = f"❌ Failed to schedule: {str(e)}"
+        # Check if agent needs user input
+        if response.content and "[NEED_INPUT]" in response.content:
+            question = response.content.replace("[NEED_INPUT]", "").strip()
+            LOGGER.info(f"SCHEDULER AGENT needs user input: {question}")
+            user_answer = interrupt(question)
 
-    LOGGER.info(f"SCHEDULER AGENT: {output}")
+            LOGGER.debug(f"User provided: {user_answer}")
+            messages.append(response)
+            messages.append(HumanMessage(content=f"User provided: {user_answer}"))
+            response = await scheduler_llm.ainvoke(messages)
+
+            if hasattr(response, "usage_metadata") and response.usage_metadata:
+                await save_token_usage("scheduler_agent", response.usage_metadata)
+
+        # If no tool calls, we are done
+        if not response.tool_calls:
+            tool_output = response.content
+            break
+
+        # Execute tool calls
+        tool_map = {tool.name: tool for tool in scheduler_tools}
+        tool_results = []
+
+        LOGGER.debug(f"Iteration {i+1}: Processing {len(response.tool_calls)} tool calls")
+
+        for tool_call in response.tool_calls:
+            tool_name = tool_call["name"]
+            tool_args = tool_call["args"]
+
+            LOGGER.debug(f"Calling tool: {tool_name} with args: {tool_args}")
+
+            if tool_name in tool_map:
+                tool = tool_map[tool_name]
+                try:
+                    if hasattr(tool, 'ainvoke'):
+                        result = await tool.ainvoke(tool_args)
+                    else:
+                        result = tool.invoke(tool_args)
+
+                    tool_results.append({
+                        "tool": tool_name,
+                        "result": result
+                    })
+                    LOGGER.debug(f"Tool result: {result}")
+                except Exception as e:
+                    error_msg = f"Error executing {tool_name}: {str(e)}"
+                    tool_results.append({
+                        "tool": tool_name,
+                        "error": error_msg
+                    })
+                    LOGGER.error(error_msg)
+            else:
+                LOGGER.warning(f"Tool {tool_name} not found")
+
+        # Create tool messages
+        from langchain_core.messages import ToolMessage
+        tool_messages = [
+            ToolMessage(content=str(r.get('result', r.get('error'))), tool_call_id=tc["id"])
+            for tc, r in zip(response.tool_calls, tool_results)
+        ]
+
+        messages.append(response)
+        messages.extend(tool_messages)
+
+    # If we exited the loop with pending tool output
+    if not tool_output and messages and isinstance(messages[-1], ToolMessage):
+        final_response = await scheduler_llm.ainvoke(messages)
+        if hasattr(final_response, "usage_metadata") and final_response.usage_metadata:
+            await save_token_usage("scheduler_agent", final_response.usage_metadata)
+        tool_output = final_response.content
+
+    LOGGER.debug(f"Result: {tool_output}")
 
     # Accumulate output into shared context
     updated_context = dict(state.get("context", {}))
     step_key = current_step["description"]
-    updated_context[step_key] = output
+    updated_context[step_key] = tool_output
 
     return {
         **state,
-        "last_tool_output": output,
+        "last_tool_output": tool_output,
         "context": updated_context
     }

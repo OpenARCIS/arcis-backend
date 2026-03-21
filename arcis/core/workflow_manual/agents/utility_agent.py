@@ -10,11 +10,10 @@ from arcis.core.utils.token_tracker import save_token_usage
 from arcis.logger import LOGGER
 
 from arcis.core.workflow_manual.tools.web_search import web_search
-from arcis.core.workflow_manual.tools.calendar import calendar_tools
 from arcis.core.workflow_manual.tools.memory_search import memory_search
 
 
-utility_tools = [web_search, memory_search] + calendar_tools 
+utility_tools = [web_search, memory_search]
 
 
 async def utility_agent_node(state: AgentState) -> AgentState:

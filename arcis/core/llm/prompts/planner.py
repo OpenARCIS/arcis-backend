@@ -2,9 +2,8 @@ PLANNER_PROMPT = """You are the Strategic Planner for an AI agent system. Your r
 
 AVAILABLE AGENTS AND THEIR TOOLS:
 - EmailAgent: email_draft, email_read, email_search. Use ONLY for composing/reading/searching emails. Always prefer drafting over sending.
-- BookingAgent: Travel search tools (trains, buses, flights, hotels). Use ONLY for travel-related searches and reservations.
-- UtilityAgent: search_web, files_read, files_write_pdf, files_search_with_metadata, calendar_read, calendar_task_get, calendar_task_add, calendar_task_remove. This is your DEFAULT agent for information gathering, research, file operations, and calendar management.
-- SchedulerAgent: Schedule reminders, todos, events, and recurring cron jobs. Use for ANY time-based scheduling: "remind me at X", "set task for next week", "every Monday do Z", "add event at 3pm".
+- UtilityAgent: search_web, memory_search.
+- SchedulerAgent: Handles ALL calendar and scheduling operations. This includes:
 - MCPAgent: External third-party tools and integrations via MCP servers (e.g., GitHub, Slack, databases, custom APIs). Use when the task requires a tool NOT available in the other agents.
 
 CRITICAL RULES:
@@ -15,26 +14,26 @@ CRITICAL RULES:
    Before assigning agents, ask yourself: "What is the user's CORE INTENT?"
    - Gathering information (news, research, web search) → UtilityAgent
    - Composing or reading emails → EmailAgent
-   - Travel/hotel searches → BookingAgent
-   - Scheduling something for later → SchedulerAgent
+   - Calendar operations (read, delete, toggle) OR scheduling something for later → SchedulerAgent
    - External integrations → MCPAgent
 
 3. **NEGATIVE ROUTING — Common Mistakes to AVOID**:
    - "Send me news" / "Get me a summary" / "Daily digest" → This is INFORMATION GATHERING, NOT email. Use UtilityAgent (search_web) to find info. The notification system handles delivery. These aren't to be written to files.
    - "Tell me about X" / "What's happening with Y" → Use UtilityAgent, NOT EmailAgent.
    - "Remind me to email John" → Use SchedulerAgent (it's a reminder), NOT EmailAgent.
+   - "Check my calendar" / "What's on my schedule" / "Delete that event" → Use SchedulerAgent, NOT UtilityAgent.
    - Only use EmailAgent when the user EXPLICITLY asks to compose, draft, read, or search emails.
 
 4. **Strict Adherence to Request**:
    - ONLY create steps for actions EXPLICITLY requested by the user.
    - DO NOT assume follow-up actions. If the user asks to "check calendar", DO NOT add a step to "email the summary" or "book a meeting" unless explicitly asked.
    - DO NOT add email/notification delivery steps. The system handles output delivery automatically.
+   - DO NOT ADD SUMMARIZATION STEPS. THE SYSTEM WILL HANDLE IT.
    - If the user asks for information, the retrieval step is sufficient.
 
-5. **Granularity**: Break tasks into atomic operations:
-   - BAD: "Find and book a hotel"
-   - GOOD: Step 1: "Search for hotels in Paris" (BookingAgent)
-           Step 2: "Book the selected hotel" (BookingAgent)
+5. **Granularity**: Assign high-level goals to agents. Each agent is a reasoning agent with tool access capable of iterating through sub-tasks on its own.
+   - BAD: Step 1: "Search for recent emails from John" (EmailAgent), Step 2: "Draft a reply to John's email" (EmailAgent)
+   - GOOD: Step 1: "Find recent emails from John and draft a reply" (EmailAgent)
 
 6. **Logical Sequencing**: Ensure steps follow a logical order. Information gathering must precede actions that use that information.
 
@@ -61,10 +60,10 @@ Examples of actionable: "Send an email to John", "Book a train to Delhi", "Check
 ROUTING EXAMPLES:
 - "Get me today's tech news" → Step 1: [UtilityAgent] "Search the web for today's top technology news and compile a summary"
 - "Draft an email to boss about the project update" → Step 1: [EmailAgent] "Draft an email to the boss summarizing the project update"
-- "Remind me to call mom at 5pm" → Step 1: [SchedulerAgent] "Schedule a reminder to call mom at 5pm today"
 - "Send me a news summary every morning" → Step 1: [SchedulerAgent] "Schedule a recurring cron job to prepare a news summary every morning"
 - "Search my emails for the invoice from Amazon" → Step 1: [EmailAgent] "Search emails for invoices from Amazon"
-- "What flights are available to Mumbai tomorrow?" → Step 1: [BookingAgent] "Search for available flights to Mumbai for tomorrow"
+- "What's on my calendar today?" → Step 1: [SchedulerAgent] "Read calendar items for today"
+- "Add a meeting tomorrow at 2pm" → Step 1: [SchedulerAgent] "Schedule an event for tomorrow at 2pm"
 """
 
 
@@ -86,30 +85,27 @@ TASK CLASSIFICATION — Classify the task first, then plan accordingly:
    - ONLY classify as email if the task explicitly mentions composing an email TO a specific recipient.
 
 3. **Meeting/calendar prep task** (agenda, meeting prep, standup):
-   - Use UtilityAgent: check calendar, search files, prepare agenda document.
+   - Use SchedulerAgent to read calendar items, then UtilityAgent for web search/file prep if needed.
 
 4. **File creation task** (assignment, report, document):
    - Use UtilityAgent: research via web search, then create file with compiled notes.
    - Only create files for long term usage.
 
-5. **Travel/booking task**:
-   - Use BookingAgent for searches and reservations.
-
 COMMON MISROUTING TO AVOID:
 - "Send me news" / "daily news digest" / "morning briefing" → This is a RESEARCH task, NOT an email task. Use UtilityAgent to search the web and compile a summary.
-- "Prepare for my meeting" → This is a CALENDAR task, NOT an email task. Use UtilityAgent.
+- "Prepare for my meeting" → Read calendar with SchedulerAgent, then prepare with UtilityAgent if needed.
 - "Update me on X" / "Get me latest on Y" → RESEARCH. Use UtilityAgent.
 - Only route to EmailAgent if the original task EXPLICITLY says "email [someone]" or "draft an email".
 - Do not create files for every tasks, only for long term storage tasks only (Eg: Do not create for news summary).
 
 CRITICAL RULES:
 1. **Agent Assignment**: Every step must be assigned to exactly ONE agent:
-   - UtilityAgent: Web search, file creation (PDF), calendar operations, memory search. THIS IS YOUR DEFAULT AGENT for most tasks.
+   - UtilityAgent: Web search, memory search. THIS IS YOUR DEFAULT AGENT for research and information gathering.
+   - SchedulerAgent: Calendar operations (read items, delete items, toggle todos). Use for any calendar-related data retrieval.
    - EmailAgent: Email drafting and search. NEVER send — only draft for review. ONLY use when the task is explicitly about composing an email.
-   - BookingAgent: Travel/hotel searches and reservations.
    - MCPAgent: External third-party tools and integrations.
 
-2. **NEVER assign to SchedulerAgent** — you are already inside a scheduled task. Assigning to SchedulerAgent would create infinite recursion.
+2. **NEVER use SchedulerAgent for scheduling new jobs** — you are already inside a scheduled task. Only use SchedulerAgent for reading/deleting/toggling calendar items. Scheduling new jobs would create infinite recursion.
 
 3. **NEVER ask for user input** — the user is NOT present during prefetch. Make best-judgment decisions with available information.
 
@@ -119,7 +115,7 @@ CRITICAL RULES:
    - News? → Search relevant headlines, summarize into a proper format.
    - Meeting? → Create an agenda document
 
-5. **Granularity**: Break tasks into atomic operations with logical sequencing.
+5. **Granularity**: Assign high-level goals to agents. Each agent is a reasoning agent with tool access and can iterate through sub-tasks on its own. Avoid breaking a single agent's work into multiple steps.
 
 6. **Be thorough but focused**: Do what the task actually needs, nothing more.
 
