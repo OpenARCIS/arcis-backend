@@ -208,8 +208,9 @@ __marimo__/
 .vscode
 gmail_secret.json
 google_credentials.json
-tests/
 .VSCodeCounter
 API_SCHEMA.md
 ARCIS-Telegram-Client.session
 arcis.log
+.agents
+documentation/
