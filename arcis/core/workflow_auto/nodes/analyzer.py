@@ -1,4 +1,5 @@
 from langchain_core.prompts import ChatPromptTemplate
+from datetime import datetime, timezone
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState
 from arcis.models.agents.response import PlanModel
@@ -18,7 +19,7 @@ async def analyzer_node(state: AgentState) -> AgentState:
     
     analyzer_prompt = ChatPromptTemplate.from_messages([
         ("system", AUTO_ANALYZER_PROMPT),
-        ("human", "{input}")
+        ("human", "Current Date and Time: {current_time}\n\n{input}")
     ])
     
     # Get generic LLM client (can use specific one if configured)
@@ -27,7 +28,8 @@ async def analyzer_node(state: AgentState) -> AgentState:
     chain = analyzer_prompt | structured_llm
     
     try:
-        response = await chain.ainvoke({"input": email_content})
+        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+        response = await chain.ainvoke({"input": email_content, "current_time": current_time})
         plan_response = response["parsed"]
 
         # Save token usage

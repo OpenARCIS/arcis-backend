@@ -1,5 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage
+from datetime import datetime, timezone
 from langgraph.types import interrupt
 
 from arcis.core.llm.factory import LLMFactory
@@ -53,6 +54,9 @@ Execute this task using the MCP tools available to you. Provide a detailed respo
         context=str(state.get("context", {})),
         tool_names=", ".join(t.name for t in mcp_tools),
     )
+    
+    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {current_time}"))
 
     tool_output = ""
     max_iterations = 10

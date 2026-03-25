@@ -1,5 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
+from datetime import datetime, timezone
 from langgraph.types import interrupt
 
 from arcis.core.llm.factory import LLMFactory
@@ -9,11 +10,10 @@ from arcis.core.utils.token_tracker import save_token_usage
 from arcis.logger import LOGGER
 
 from arcis.core.workflow_manual.tools.web_search import web_search
-from arcis.core.workflow_manual.tools.calendar import calendar_tools
 from arcis.core.workflow_manual.tools.memory_search import memory_search
 
 
-utility_tools = [web_search, memory_search] + calendar_tools 
+utility_tools = [web_search, memory_search]
 
 
 async def utility_agent_node(state: AgentState) -> AgentState:
@@ -46,6 +46,9 @@ Execute this task and gather necessary information.""")
         task_description=current_step["description"],
         context=str(state.get("context", {}))
     )
+    
+    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {current_time}"))
     
     tool_output = ""
     max_iterations = 3
