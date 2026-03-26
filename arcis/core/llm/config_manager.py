@@ -44,7 +44,7 @@ DEFAULT_AGENTS_CONFIG = {
     },
     "analyzer": {
         "provider": LLMProvider.NVIDIA_NIM,
-        "model_name": "meta/llama-3.3-70b-instruct",
+        "model_name": "mistralai/mistral-nemotron",
         "temperature": 0.2
     },
     "memory_extractor": {
