@@ -55,6 +55,14 @@ class Config:
     # Options: "telegram", "web", "both"
     NOTIFICATION_CHANNEL = getenv("NOTIFICATION_CHANNEL", "both")
 
+    # Spotify Config
+    SPOTIFY_CLIENT_ID = getenv("SPOTIFY_CLIENT_ID")
+    SPOTIFY_CLIENT_SECRET = getenv("SPOTIFY_CLIENT_SECRET")
+    SPOTIFY_REDIRECT_URI = getenv("SPOTIFY_REDIRECT_URI", "http://localhost:8000/callback/spotify")
+
+    # Brave Search Config
+    BRAVE_SEARCH_API_KEY = getenv("BRAVE_SEARCH_API_KEY")
+
     # Simple Auth config
     AUTH_USERNAME = getenv("AUTH_USERNAME")
     AUTH_PASSWORD = getenv("AUTH_PASSWORD")

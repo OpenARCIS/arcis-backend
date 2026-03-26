@@ -6,3 +6,6 @@ class InvalidAPIKey(Exception):
 
 class NotDoneGoogleAuthentication(Exception):
     pass
+
+class SpotifyAuthError(Exception):
+    pass
