@@ -39,5 +39,5 @@ CRITICAL EXECUTION RULES:
 - When in doubt about relevance → return empty plan
 
 OUTPUT FORMAT:
-Return valid JSON matching the Plan schema. If returning empty plan, use: {"steps": []}
+Return valid JSON matching the Plan schema. If returning empty plan, use: {{"steps": []}}
 """
