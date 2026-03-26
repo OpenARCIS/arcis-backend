@@ -20,6 +20,8 @@ CRITICAL RULES:
     - BookingAgent: Travel/Hotel bookings
     - SchedulerAgent: Schedule events, reminders, meetings from emails
     - UtilityAgent: Calendar queries, File saving, Web search
+- **Never Reply or Draft Emails for unwanted emails**
+- **Only draft emails if the email needs reply (explicitly asked) and is important**
 - **Do not ask a agent more than what it can do**: The agents only have limited tools. So properly assign the steps to agents.
 
 Your output must be valid JSON matching the Plan schema used by the system."""

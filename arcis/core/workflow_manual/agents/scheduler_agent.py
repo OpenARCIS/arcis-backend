@@ -55,8 +55,10 @@ Execute this task using the available tools.""")
         context=str(state.get("context", {}))
     )
 
-    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
-    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {current_time}"))
+    # Inject local system time with explicit timezone offset
+    current_dt = datetime.now().astimezone()
+    current_time_str = current_dt.strftime("%Y-%m-%d %H:%M:%S %z (%Z)")
+    messages.insert(1, SystemMessage(content=f"Current System Date and Time is: {current_time_str}"))
 
     tool_output = ""
     max_iterations = 3
