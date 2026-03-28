@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException
+from fastapi.responses import HTMLResponse
 from aiogoogle import Aiogoogle
 from datetime import datetime
 
@@ -61,7 +62,7 @@ async def callback(request: Request):
         # Reload the credentials into the application global instance
         await gmail_api.load_creds()
 
-        return {"message": "Authentication successful! Credentials saved for test_user."}
+        return HTMLResponse("<script>window.close()</script>")
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Auth flow failed: {str(e)}")

@@ -613,7 +613,5 @@ NVIDIA_NIM = {
         "context": "8k",
         "usage": "General multimodal chat",
         "speed": "Fast"
-    },
+    }
 }
-
-OLLAMA = {}

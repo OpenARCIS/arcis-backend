@@ -22,7 +22,7 @@ async def schedule_job(
     Args:
         title: Short title for the job (e.g., "Call mom", "Team standup").
         job_type: One of 'reminder', 'todo', 'event', 'cron'.
-        trigger_at: ISO 8601 datetime string for when the job should trigger (e.g., '2025-10-27T15:00:00').
+        trigger_at: ISO 8601 datetime string for when the job should trigger, preferably with timezone offset (e.g., '2025-10-27T15:00:00+05:30'). If no timezone is provided, local system time is assumed.
         description: Optional detailed description of what needs to be done.
         cron_expression: Cron expression for recurring jobs (e.g., '0 9 * * 1' for every Monday 9am). Only needed when job_type is 'cron'.
         notification_message: Custom notification text. If empty, title will be used.
@@ -39,6 +39,9 @@ async def schedule_job(
         # Parse trigger time
         try:
             trigger_dt = datetime.fromisoformat(trigger_at)
+            # Make naive datetimes timezone-aware (assumes local system time)
+            if trigger_dt.tzinfo is None:
+                trigger_dt = trigger_dt.astimezone()
         except ValueError:
             return f"❌ Invalid trigger_at '{trigger_at}'. Please use ISO 8601 format (YYYY-MM-DDTHH:MM:SS)."
 

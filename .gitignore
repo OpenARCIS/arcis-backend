@@ -213,3 +213,4 @@ tests/
 API_SCHEMA.md
 ARCIS-Telegram-Client.session
 arcis.log
+.agents/
