@@ -10,20 +10,20 @@ from arcis.core.tg_dm.draft_reply import generate_draft_reply, generate_ack_repl
 from arcis.tg_plugins.dm_notify import notify_incoming_dm, notify_action_from_dm
 
 
-async def _run_auto_flow_for_dm(text: str, sender_name: str) -> str:
+async def _run_tg_dm_flow(text: str, sender_name: str) -> str:
     """
-    Feed an ACTIONABLE DM into the existing auto_flow pipeline.
+    Feed an ACTIONABLE DM into the dedicated TG DM pipeline.
     Returns a plain-text summary of what was done.
     """
-    from arcis.core.workflow_auto.auto_flow import _compile_auto_app
+    from arcis.core.workflow_tg_dm.tg_dm_flow import _compile_tg_dm_app
     from arcis.models.agents.state import AgentState
 
     thread_id = str(uuid.uuid4())
     config = {"configurable": {"thread_id": thread_id}}
 
     user_input = (
-        f"Telegram message from {sender_name}:\n"
-        f"{text}"
+        f"Sender: {sender_name}\n"
+        f"Message: {text}"
     )
 
     initial_state: AgentState = {
@@ -34,19 +34,29 @@ async def _run_auto_flow_for_dm(text: str, sender_name: str) -> str:
         "final_response": "",
         "current_step_index": 0,
         "thread_id": thread_id,
+        "next_node": None,
+        "workflow_status": None
     }
 
-    app = _compile_auto_app()
+    app = _compile_tg_dm_app()
     await app.ainvoke(initial_state, config)
-
+    
+    # We could check for interrupts here if we want full interrupt support
+    # For now, extract the final response or the completed steps
+    
     state_after = await app.aget_state(config)
     final = state_after.values
+
+    # Prefer the replanner's final conversational response
+    if final.get("final_response") and final["final_response"] != "Task handled.":
+        return final["final_response"]
 
     completed = [s for s in final.get("plan", []) if s.get("status") == "completed"]
     if completed:
         steps = "\n".join(f"  • {s['description']}" for s in completed)
         return steps
-    return final.get("final_response", "Task handled.")
+
+    return final.get("final_response", "Request processed.")
 
 
 @Client.on_message(filters.private & ~filters.me & ~filters.bot)
@@ -93,12 +103,12 @@ async def handle_incoming_dm(client: Client, message: Message):
             )
 
     elif triage.type == "ACTIONABLE":
-        LOGGER.info(f"[User Session] Routing ACTIONABLE message from [{sender_name}] to auto_flow.")
+        LOGGER.info(f"[User Session] Routing ACTIONABLE message from [{sender_name}] to TG DM flow.")
 
         try:
-            action_summary = await _run_auto_flow_for_dm(text, sender_name)
+            action_summary = await _run_tg_dm_flow(text, sender_name)
         except Exception as e:
-            LOGGER.error(f"[User Session] auto_flow error for DM: {e}")
+            LOGGER.error(f"[User Session] TG DM flow error for DM: {e}")
             action_summary = "Could not process request."
 
         # Always send an acknowledgment back to the sender
