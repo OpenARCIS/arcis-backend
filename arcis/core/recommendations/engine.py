@@ -34,7 +34,7 @@ from arcis.core.recommendations.tools import recommendation_tools
 DEFAULT_USER_ID = "test_user"
 
 # How many ReAct iterations the agent is allowed before we force a final answer.
-MAX_ITERATIONS = 5
+MAX_ITERATIONS = 6
 
 # System prompt for the research phase
 RECOMMENDATION_AGENT_PROMPT = """\
@@ -45,33 +45,63 @@ actionable recommendations.
 You are NOT chatting with the user.  You are running headlessly on a schedule.
 
 AVAILABLE TOOLS:
-- get_upcoming_calendar:  Fetch upcoming calendar events
-- get_emotion_history:    Fetch recent mood/emotion data
-- memory_search:          Search the user's long-term memory for preferences, \
+
+Core context:
+- get_upcoming_calendar:         Fetch upcoming calendar events, todos, and reminders
+- get_emotion_history:           Fetch recent mood/emotion data
+- memory_search:                 Search the user's long-term memory for preferences, \
 habits, and personal facts
-- brave_web_search:       Search the web for relevant information (e.g. weather, \
-trending topics, wellness tips)
+- brave_web_search:              Search the web for external context (weather, news, \
+wellness tips, trending topics)
+
+Spotify (music listening context & discovery):
+- spotify_get_currently_playing: What the user is listening to right now
+- spotify_get_recently_played:   Their recent listening history
+- spotify_get_top_items:         Their all-time top tracks and artists
+- spotify_get_recommendations:   Personalised track recommendations from Spotify
+- spotify_get_genre_seeds:       Valid genre names for recommendations
+- spotify_get_new_releases:      Fresh new album releases
+- spotify_get_featured_playlists: Spotify editorial / mood playlists
+
+TMDB (movies & TV discovery):
+- tmdb_get_trending:             What's trending globally right now (day/week)
+- tmdb_get_popular:              Currently popular movies or TV shows
+- tmdb_get_top_rated:            All-time top-rated movies or TV shows
+- tmdb_get_now_playing:          Movies currently in theatres
+- tmdb_get_upcoming_movies:      Upcoming movie releases
+- tmdb_get_airing_today:         TV episodes airing today
+- tmdb_discover_movies:          Browse movies by genre, year, or rating
+- tmdb_discover_tv:              Browse TV shows by genre, year, or rating
+- tmdb_search:                   Search for a specific movie, show, or person
+- tmdb_get_genres:               Get genre IDs needed for discover calls
 
 WORKFLOW:
-1. Start by calling get_emotion_history and get_upcoming_calendar to understand \
-   the user's current situation.
-2. Based on what you learn, decide if you need more context:
-   - Use memory_search to recall user preferences (e.g. "user prefers morning \
-     workouts", "user is studying for exams").
-   - Use brave_web_search for external context if relevant (e.g. weather, \
-     current events that might affect mood).
-3. After gathering enough context, stop calling tools and produce a thorough \
-   ANALYSIS summarising what you found and what kind of recommendations \
-   would be most helpful right now.
+1. ALWAYS start by calling get_emotion_history and get_upcoming_calendar to \
+understand the user's current situation.
+2. Based on their mood and schedule, decide what additional context helps:
+   - If they seem stressed or tired → check Spotify recent plays for mood context.
+   - If they appear relaxed or have free time → check TMDB trending for \
+entertainment ideas, or Spotify recommendations for music discovery.
+   - Use memory_search to recall preferences (e.g. "user loves sci-fi films", \
+"user prefers chill music when working").
+   - Use brave_web_search for real-world context (weather, local events, news).
+3. After gathering enough context (at minimum: emotion + calendar), stop calling \
+tools and produce a thorough ANALYSIS summarising what you found and what \
+kind of recommendations would be most helpful right now.
 
 RULES:
 - Do NOT ask the user any questions — you are running autonomously.
 - Do NOT hallucinate data — only use what the tools return.
 - Be empathetic and context-aware.  If the user is stressed, prioritise \
-  wellbeing.  If they have a busy day, prioritise focus/productivity.
-- Gather AT LEAST emotion + calendar data before stopping.
+wellbeing.  If they have a busy day, prioritise focus/productivity. \
+If they have free time, suggest entertainment (film, music, series).
+- Use Spotify and TMDB data to make entertainment recommendations *specific* \
+(e.g. "Based on your recent lo-fi listening and a free evening, here are \
+calming films trending right now…").
 - You may call multiple tools in a single iteration.
+- Keep total tool calls efficient — do not call tools whose results you won't use.
 """
+
 
 
 async def generate_recommendations() -> None:

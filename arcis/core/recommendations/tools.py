@@ -2,13 +2,22 @@
 Tools available to the Recommendation ReAct agent.
 
 Each tool is a read-only data-fetching function that the agent can call
-during its research phase.  Adding a new data source (Spotify, IMDB, …)
-is as simple as:
-  1. Write a new @tool async function below.
+during its research phase.  Adding a new data source is as simple as:
+  1. Write a new @tool async function below (or import from another module).
   2. Append it to the `recommendation_tools` list at the bottom.
 
-Note: These tools are designed for headless/autonomous use — they never
-ask for user input and gracefully degrade on errors.
+Current data sources:
+  - Calendar          — upcoming events / todos
+  - Emotion history   — recent mood data
+  - Long-term memory  — user preferences / facts
+  - Web search        — external context (weather, news, tips)
+  - Spotify           — listening history, top items, music discovery
+  - TMDB              — trending / popular / top-rated movies & TV shows
+
+Note: Only READ-ONLY / DISCOVERY tools are included here.  Playback
+control, playlist mutations, and follow actions are excluded because the
+recommendation engine runs headlessly and should never take actions on
+behalf of the user.
 """
 
 from __future__ import annotations
@@ -133,13 +142,65 @@ from arcis.core.workflow_manual.tools.brave_search import brave_web_search
 
 
 # ===================================================================
+# SPOTIFY — listening history & music discovery (read-only)
+# ===================================================================
+
+from arcis.core.workflow_manual.tools.spotify import (
+    spotify_get_currently_playing,
+    spotify_get_recently_played,
+    spotify_get_top_items,
+    spotify_get_recommendations,
+    spotify_get_genre_seeds,
+    spotify_get_new_releases,
+    spotify_get_featured_playlists,
+)
+
+
+# ===================================================================
+# TMDB — movies & TV trending / discovery (read-only)
+# ===================================================================
+
+from arcis.core.workflow_manual.tools.tmdb import (
+    tmdb_get_trending,
+    tmdb_get_popular,
+    tmdb_get_top_rated,
+    tmdb_get_now_playing,
+    tmdb_get_upcoming_movies,
+    tmdb_get_airing_today,
+    tmdb_discover_movies,
+    tmdb_discover_tv,
+    tmdb_search,
+    tmdb_get_genres,
+)
+
+
+# ===================================================================
 # TOOL REGISTRY
 # ===================================================================
-# Add future data sources (Spotify, IMDB, weather, …) here.
 
 recommendation_tools = [
+    # Core context
     get_upcoming_calendar,
     get_emotion_history,
     memory_search,
     brave_web_search,
+    # Spotify — music listening context & discovery
+    spotify_get_currently_playing,
+    spotify_get_recently_played,
+    spotify_get_top_items,
+    spotify_get_recommendations,
+    spotify_get_genre_seeds,
+    spotify_get_new_releases,
+    spotify_get_featured_playlists,
+    # TMDB — movies & TV discovery
+    tmdb_get_trending,
+    tmdb_get_popular,
+    tmdb_get_top_rated,
+    tmdb_get_now_playing,
+    tmdb_get_upcoming_movies,
+    tmdb_get_airing_today,
+    tmdb_discover_movies,
+    tmdb_discover_tv,
+    tmdb_search,
+    tmdb_get_genres,
 ]
