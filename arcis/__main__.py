@@ -29,6 +29,8 @@ from arcis.core.llm.long_memory import long_memory
 from arcis.core.external_api.gmail import gmail_api
 from arcis.core.tts.tts_manager import tts_manager
 
+from arcis.tgclient import get_tg_client
+from arcis.tg_user_client import get_user_session
 from arcis.core.workflow_auto.auto_flow import run_autonomous_processing
 from arcis.core.mcp.manager import mcp_manager
 from arcis.core.scheduler.scheduler_service import scheduler_service
@@ -75,6 +77,14 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             LOGGER.error(f"Failed to start Telegram Bot: {e}")
 
+    # Start user session (for listening to external DMs)
+    tg_user = get_user_session()
+    if tg_user:
+        try:
+            await tg_user.start()
+        except Exception as e:
+            LOGGER.error(f"Failed to start Telegram User Session: {e}")
+
     cron_task = None
     try:
         await scheduler_service.start()
@@ -113,6 +123,12 @@ async def lifespan(app: FastAPI):
             await tg_arcis.stop()
         except Exception as e:
             LOGGER.error(f"Failed to stop Telegram Bot: {e}")
+
+    if tg_user:
+        try:
+            await tg_user.stop()
+        except Exception as e:
+            LOGGER.error(f"Failed to stop Telegram User Session: {e}")
 
     await mcp_manager.shutdown()
     await mongo.disconnect()
