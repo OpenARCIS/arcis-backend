@@ -19,6 +19,7 @@ from arcis.router.token_tracker import token_tracker_router
 from arcis.router.onboarding import onboarding_router
 from arcis.router.auth import auth_router
 from arcis.router.spotify import spotify_router
+from arcis.router.dashboard import dashboard_router
 
 from arcis.database.mongo.connection import mongo
 
@@ -78,6 +79,12 @@ async def lifespan(app: FastAPI):
     try:
         await scheduler_service.start()
         scheduler_service.add_email_cron(int(Config.AUTO_CHECK_INTERVAL))
+        scheduler_service.add_recommendation_cron(int(Config.RECOMMENDATION_INTERVAL))
+        # Fire an initial recommendation generation immediately on startup
+        # so the dashboard is populated before the first scheduled interval.
+        import asyncio as _asyncio
+        from arcis.core.recommendations.engine import generate_recommendations
+        _asyncio.create_task(generate_recommendations())
     except Exception as e:
         LOGGER.error(f"Scheduler startup failed, falling back to simple cron: {e}")
         # Fallback to simple asyncio cron if APScheduler fails
@@ -133,6 +140,7 @@ api_server.include_router(token_tracker_router)
 api_server.include_router(onboarding_router)
 api_server.include_router(auth_router)
 api_server.include_router(spotify_router)
+api_server.include_router(dashboard_router)
 
 
 if __name__ == '__main__':

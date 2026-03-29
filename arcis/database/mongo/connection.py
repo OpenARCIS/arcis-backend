@@ -13,6 +13,7 @@ COLLECTIONS = {
     'scheduled_jobs': 'scheduled_jobs',
     'apscheduler_jobs': 'apscheduler_jobs',
     'notifications': 'notifications',
+    'recommendations': 'recommendations',
 }
 
 class Database:
@@ -52,6 +53,9 @@ class Database:
         )
         await self.db[COLLECTIONS['notifications']].create_index(
             [("read", 1), ("created_at", -1)]
+        )
+        await self.db[COLLECTIONS['recommendations']].create_index(
+            [("user_id", 1), ("generated_at", -1)]
         )
 
 
