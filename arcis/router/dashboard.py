@@ -9,7 +9,7 @@ from arcis.database.mongo.connection import mongo, COLLECTIONS
 from arcis.logger import LOGGER
 
 
-dashboard_router = APIRouter(prefix="/api/v1/dashboard", tags=["Dashboard"])
+dashboard_router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
 # --- Response model ---
