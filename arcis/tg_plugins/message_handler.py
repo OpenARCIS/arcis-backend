@@ -7,6 +7,7 @@ from arcis.core.workflow_manual.manual_flow import run_workflow
 from arcis.core.workflow_auto.auto_flow import resolve_interrupt
 from arcis.core.llm.short_memory import db_client
 from arcis.core.stt.stt_manager import transcribe_audio
+from arcis.tg_user_client import get_user_session
 
 
 @Client.on_message(filters.text & filters.private)
@@ -21,9 +22,11 @@ async def handle_direct_message(client: Client, message: Message):
 
     await client.send_chat_action(chat_id=message.chat.id, action=enums.ChatAction.TYPING)
 
-    # Check if this is a reply to an auto-flow interrupt
+    # Check if this is a reply to a bot-sent notification
     if message.reply_to_message_id:
         db = db_client['arcis_short_memory']
+
+        # 1. Check auto-flow interrupt mapping
         mapping = db['tg_interrupt_mappings'].find_one({
             "message_id": message.reply_to_message_id,
             "chat_id": message.chat.id
@@ -50,6 +53,35 @@ async def handle_direct_message(client: Client, message: Message):
             except Exception as e:
                 LOGGER.error(f"Error sending message back with markdown, trying without: {e}")
                 await message.reply_text(response_text)
+            return
+
+        # 2. Check DM notification mapping (forward reply to original sender via user session)
+        dm_mapping = db["tg_dm_mappings"].find_one({
+            "bot_message_id": message.reply_to_message_id,
+            "bot_chat_id": message.chat.id
+        })
+
+        if dm_mapping:
+            LOGGER.info(f"Detected reply to DM notification — forwarding to original sender.")
+            user_session = get_user_session()
+
+            if user_session is None:
+                await message.reply_text("⚠️ User session not configured — cannot forward reply.")
+                return
+
+            original_chat_id = dm_mapping["original_chat_id"]
+            sender_name = dm_mapping.get("sender_name", "them")
+
+            try:
+                await user_session.send_message(chat_id=original_chat_id, text=message.text)
+                db["tg_dm_mappings"].delete_one({"_id": dm_mapping["_id"]})
+                await message.reply_text(
+                    f"✅ Reply sent to *{sender_name}*.",
+                    parse_mode=enums.ParseMode.MARKDOWN
+                )
+            except Exception as e:
+                LOGGER.error(f"Failed to forward reply to sender: {e}")
+                await message.reply_text(f"❌ Failed to send reply: {e}")
             return
 
     # Normal manual flow processing

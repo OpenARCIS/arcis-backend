@@ -42,6 +42,12 @@ class Config:
     TG_BOT_TOKEN = getenv("TG_BOT_TOKEN")
     ALLOWED_TG_USER_ID = getenv("ALLOWED_TG_USER_ID")
 
+    # Telegram User Session (for listening to DMs sent TO the user by others)
+    # Generate once with: python scripts/gen_session.py
+    TG_USER_SESSION = getenv("TG_USER_SESSION")
+    # If "true", auto-send AI-generated replies for social messages without waiting for owner approval
+    TG_AUTO_SEND_REPLY = getenv("TG_AUTO_SEND_REPLY", "true")
+
     # MCP Config
     MCP_SERVERS_CONFIG_PATH = getenv("MCP_SERVERS_CONFIG_PATH", None)
     MCP_TOOL_THRESHOLD = int(getenv("MCP_TOOL_THRESHOLD", "30"))
