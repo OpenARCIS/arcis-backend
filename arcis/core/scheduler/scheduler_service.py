@@ -254,6 +254,23 @@ class SchedulerService:
         )
         LOGGER.info(f"SCHEDULER: Email cron registered (every {interval_seconds}s)")
 
+    def add_recommendation_cron(self, interval_seconds: int):
+        """Register the recommendation engine as an APScheduler interval job."""
+        from arcis.core.recommendations.engine import generate_recommendations
+
+        self.scheduler.add_job(
+            _aps_async_wrapper,
+            trigger="interval",
+            seconds=interval_seconds,
+            id="recommendation_cron",
+            args=[generate_recommendations],
+            replace_existing=True,
+            name="Recommendation Engine Cron",
+            max_instances=1,
+            coalesce=True,
+        )
+        LOGGER.info(f"SCHEDULER: Recommendation cron registered (every {interval_seconds}s)")
+
 
 # ---- APScheduler-compatible wrapper functions ----
 # These are async functions natively awaited by APScheduler's AsyncIOScheduler.

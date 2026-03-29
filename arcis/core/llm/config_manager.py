@@ -34,7 +34,7 @@ DEFAULT_AGENTS_CONFIG = {
     },
     "utility_agent": {
         "provider": LLMProvider.NVIDIA_NIM,
-        "model_name": "moonshotai/kimi-k2-thinking",
+        "model_name": "moonshotai/kimi-k2-instruct-0905",
         "temperature": 0.7
     },
     "mcp_agent": {
