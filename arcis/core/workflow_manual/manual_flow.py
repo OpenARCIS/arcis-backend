@@ -99,7 +99,8 @@ async def run_workflow(user_input: str, thread_id: str | None):
                 "context": {},
                 "last_tool_output": "",
                 "final_response": "",
-                "thread_id": thread_id
+                "thread_id": thread_id,
+                "generated_files": []
             }
         else:
             # continuing conversation from chat history (not interupt but same chat)

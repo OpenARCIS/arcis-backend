@@ -63,3 +63,47 @@ async def notify_interrupt(interrupt_id: str, summary: str) -> bool:
         LOGGER.warning(f"TG interrupt notification failed: {e}")
         return False
 
+
+async def notify_with_file(file_path: str, caption: str = "") -> bool:
+    """
+    Send a document/file to the owner via Telegram.
+    Returns True if the file was sent successfully.
+    """
+    bot = get_tg_client()
+
+    if bot is None:
+        LOGGER.debug("TG file notify skipped: bot not configured.")
+        return False
+
+    chat_id = Config.ALLOWED_TG_USER_ID
+    if not chat_id:
+        LOGGER.debug("TG file notify skipped: ALLOWED_TG_USER_ID not set.")
+        return False
+
+    try:
+        await bot.send_document(
+            chat_id=int(chat_id),
+            document=file_path,
+            caption=caption or None
+        )
+        LOGGER.info(f"TG file sent: {file_path}")
+        return True
+    except Exception as e:
+        LOGGER.warning(f"TG file send failed ({file_path}): {e}")
+        return False
+
+
+async def notify_with_files(file_paths: list, caption: str = "") -> bool:
+    """
+    Send multiple documents to the owner via Telegram.
+    Returns True if ALL files were sent successfully.
+    """
+    if not file_paths:
+        return True
+
+    all_ok = True
+    for path in file_paths:
+        ok = await notify_with_file(path, caption)
+        if not ok:
+            all_ok = False
+    return all_ok

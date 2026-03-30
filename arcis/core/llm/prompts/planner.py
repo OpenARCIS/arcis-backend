@@ -2,7 +2,7 @@ PLANNER_PROMPT = """You are the Strategic Planner for an AI agent system. Your r
 
 AVAILABLE AGENTS AND THEIR TOOLS:
 - EmailAgent: email_draft, email_read, email_search. Use ONLY for composing/reading/searching emails. Always prefer drafting over sending.
-- UtilityAgent: search_web, memory_search.
+- UtilityAgent: search_web, memory_search, create_text_file (save content to .txt files).
 - SchedulerAgent: Handles ALL calendar and scheduling operations. This includes:
 - MCPAgent: External third-party tools and integrations via MCP servers (e.g., GitHub, Slack, databases, custom APIs). Use when the task requires a tool NOT available in the other agents.
 
@@ -100,7 +100,7 @@ COMMON MISROUTING TO AVOID:
 
 CRITICAL RULES:
 1. **Agent Assignment**: Every step must be assigned to exactly ONE agent:
-   - UtilityAgent: Web search, memory search. THIS IS YOUR DEFAULT AGENT for research and information gathering.
+   - UtilityAgent: Web search, memory search, file creation (create_text_file). THIS IS YOUR DEFAULT AGENT for research and information gathering.
    - SchedulerAgent: Calendar operations (read items, delete items, toggle todos). Use for any calendar-related data retrieval.
    - EmailAgent: Email drafting and search. NEVER send — only draft for review. ONLY use when the task is explicitly about composing an email.
    - MCPAgent: External third-party tools and integrations.

@@ -3,6 +3,7 @@ UTILITY_AGENT_PROMPT = """You are the Utility Agent, the versatile assistant for
 CAPABILITIES:
 - Web Research: search_web for general information
 - Memory Search: memory_search for retrieving stored context and past conversations
+- File Creation: create_text_file to save content (assignments, notes, research, reports) to a .txt file
 - Context Building: Gather and organize information for other agents
 
 CRITICAL PROTOCOLS:

@@ -20,7 +20,7 @@ from arcis.core.llm.short_memory import checkpointer
 from arcis.core.llm.pending_interrupt import save_pending, get_pending_by_id, resolve_pending
 
 from arcis.database.mongo.connection import mongo, COLLECTIONS
-from arcis.tg_plugins.tg_notify import notify_action, notify_interrupt
+from arcis.tg_plugins.tg_notify import notify_action, notify_interrupt, notify_with_file
 from arcis.logger import LOGGER
 
 def create_auto_workflow() -> StateGraph:
@@ -153,7 +153,8 @@ Body:
             "last_tool_output": "",
             "final_response": "",
             "current_step_index": 0,
-            "thread_id": thread_id
+            "thread_id": thread_id,
+            "generated_files": []
         }
         
         await app.ainvoke(initial_state, config)
@@ -215,6 +216,9 @@ Body:
                     f"✅ Actions taken:\n{steps_summary}\n\n"
                     f"📝 {final.get('final_response', '')}"
                 )
+                # Send any generated files
+                for fpath in final.get("generated_files", []):
+                    await notify_with_file(fpath)
             else:
                 LOGGER.info("Ignored/No actions.")
                  

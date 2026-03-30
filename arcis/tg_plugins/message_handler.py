@@ -8,6 +8,7 @@ from arcis.core.workflow_auto.auto_flow import resolve_interrupt
 from arcis.core.llm.short_memory import db_client
 from arcis.core.stt.stt_manager import transcribe_audio
 from arcis.tg_user_client import get_user_session
+from arcis.tg_plugins.tg_notify import notify_with_file
 
 
 @Client.on_message(filters.text & filters.private)
@@ -92,6 +93,9 @@ async def handle_direct_message(client: Client, message: Message):
             response_text = final_state.get("response", "Workflow interrupted. Need more info.")
         else:
             response_text = final_state.get("final_response", "Workflow completed without a specific text response.")
+            # Send any generated files
+            for fpath in final_state.get("generated_files", []):
+                await notify_with_file(fpath)
 
     except Exception as e:
         LOGGER.error(f"Error executing workflow: {e}")
@@ -145,6 +149,9 @@ async def handle_voice_message(client: Client, message: Message):
             ai_response = final_state.get("response", "Workflow interrupted. Need more info.")
         else:
             ai_response = final_state.get("final_response", "Workflow completed without a specific text response.")
+            # Send any generated files
+            for fpath in final_state.get("generated_files", []):
+                await notify_with_file(fpath)
 
     except Exception as e:
         LOGGER.error(f"Error executing workflow from voice: {e}")
