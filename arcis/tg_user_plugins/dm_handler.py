@@ -102,8 +102,8 @@ async def handle_incoming_dm(client: Client, message: Message):
                 original_message_id=message.id,
             )
 
-    elif triage.type == "ACTIONABLE":
-        LOGGER.info(f"[User Session] Routing ACTIONABLE message from [{sender_name}] to TG DM flow.")
+    elif triage.type in ("ACTIONABLE", "SCHEDULE"):
+        LOGGER.info(f"[User Session] Routing {triage.type} message from [{sender_name}] to TG DM flow.")
 
         try:
             action_summary = await _run_tg_dm_flow(text, sender_name)

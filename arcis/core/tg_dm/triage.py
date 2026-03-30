@@ -7,24 +7,39 @@ from arcis.logger import LOGGER
 TRIAGE_PROMPT = """You are a message classifier for a personal AI assistant.
 
 A message was sent to the assistant's owner by an external contact on Telegram.
-Classify this message into exactly one of three categories:
+Classify this message into exactly one of the following categories.
 
-- SOCIAL: Casual conversation, greetings, personal chat.
-  Examples: "lets grab coffee", "babe, how was your day?"
+IMPORTANT RULE — Any message that mentions a specific time, date, day, or asks
+about availability / schedule / "are you free?" MUST be classified as SCHEDULE,
+not SOCIAL, even if the overall tone is casual.
 
-- ACTIONABLE: The sender is requesting the owner to do something, buy something, schedule something, plan something,
-  remember something, or take any real-world action.
-  Examples: "buy milk when you comeback", "remind me about the meeting tomorrow", "can you book a table?", "are you free?"
+- SCHEDULE: The message mentions or implies a time, date, day, meeting, or asks
+  about availability. These need a calendar lookup before the owner can respond.
+  Examples: "are you free at 5pm?", "let's meet tomorrow", "are you free?",
+  "can we do Saturday?", "what time works for you?", "let's grab coffee at 3",
+  "wanna hang out this weekend?"
 
-- IGNORE: Spam, promotional content, bot messages, irrelevant or automated messages.
+- SOCIAL: Pure casual conversation with NO time/date/availability component.
+  Greetings, personal chat, emotional sharing, or banter.
+  Examples: "hey, how's it going?", "babe, how was your day?", "haha that's hilarious",
+  "good morning!", "miss you", "check this meme out"
+
+- ACTIONABLE: The sender is requesting the owner to do something concrete —
+  buy something, remember something, complete a task, or take a real-world action.
+  (If the action involves scheduling/meeting, classify as SCHEDULE instead.)
+  Examples: "buy milk on your way home", "remind me about the report",
+  "can you send me that file?", "call the dentist"
+
+- IGNORE: Spam, promotional content, bot messages, or irrelevant automated messages.
   Examples: "You won a prize!", "Click here to claim your offer"
 
-Respond ONLY with a JSON object: {{"type": "SOCIAL"|"ACTIONABLE"|"IGNORE", "reason": "<one sentence>"}}
+Respond ONLY with a JSON object:
+{{"type": "SCHEDULE"|"SOCIAL"|"ACTIONABLE"|"IGNORE", "reason": "<one sentence>"}}
 """
 
 
 class TriageResult(BaseModel):
-    type: str   # "SOCIAL" | "ACTIONABLE" | "IGNORE"
+    type: str   # "SCHEDULE" | "SOCIAL" | "ACTIONABLE" | "IGNORE"
     reason: str
 
 
