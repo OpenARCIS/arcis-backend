@@ -9,12 +9,12 @@ TRIAGE_PROMPT = """You are a message classifier for a personal AI assistant.
 A message was sent to the assistant's owner by an external contact on Telegram.
 Classify this message into exactly one of three categories:
 
-- SOCIAL: Casual conversation, greetings, making plans, asking if someone is free, personal chat.
-  Examples: "hey are you free?", "lets grab coffee", "babe, how was your day?"
+- SOCIAL: Casual conversation, greetings, personal chat.
+  Examples: "lets grab coffee", "babe, how was your day?"
 
-- ACTIONABLE: The sender is requesting the owner to do something, buy something, schedule something,
+- ACTIONABLE: The sender is requesting the owner to do something, buy something, schedule something, plan something,
   remember something, or take any real-world action.
-  Examples: "buy milk when you comeback", "remind me about the meeting tomorrow", "can you book a table?"
+  Examples: "buy milk when you comeback", "remind me about the meeting tomorrow", "can you book a table?", "are you free?"
 
 - IGNORE: Spam, promotional content, bot messages, irrelevant or automated messages.
   Examples: "You won a prize!", "Click here to claim your offer"

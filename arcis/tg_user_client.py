@@ -14,7 +14,7 @@ class UserSession(Client):
     """
     def __init__(self):
         super().__init__(
-            name="ARCIS-User-Session",
+            name="ARCIS-User-Sessionn",
             api_id=Config.TELEGRAM_API_ID,
             api_hash=Config.TELEGRAM_API_HASH,
             session_string=Config.TG_USER_SESSION,
