@@ -18,7 +18,7 @@ IGNORE & RETURN EMPTY PLAN for:
 CREATE A PLAN only if the email:
 - Explicitly asks you to do something (schedule, book, reply, search)
 - Contains a direct question requiring a response
-- Mentions meetings, deadlines, or events that need scheduling
+- Mentions assignments, meetings, deadlines, or events that need scheduling
 - Requests information or a decision from you
 - Requires travel/booking arrangements
 
